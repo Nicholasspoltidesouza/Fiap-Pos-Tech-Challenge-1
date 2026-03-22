@@ -4,6 +4,24 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
+### Environment (secrets) ###
+.env
+.env.local
+.env.*.local
+
+### Spring Boot local profile (copy from *.example) ###
+src/main/resources/application-local.yml
+src/main/resources/application-local.properties
+
+### Logs ###
+*.log
+logs/
+
+### OS ###
+.DS_Store
+Thumbs.db
+Desktop.ini
+
 ### STS ###
 .apt_generated
 .classpath
