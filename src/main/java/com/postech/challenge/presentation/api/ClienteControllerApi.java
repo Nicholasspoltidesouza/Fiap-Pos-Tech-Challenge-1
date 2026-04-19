@@ -17,13 +17,15 @@ import org.springframework.web.bind.annotation.RestController;
 import com.postech.challenge.application.dto.ClienteRequestDTO;
 import com.postech.challenge.application.dto.ClienteResponseDTO;
 import com.postech.challenge.application.usecase.ClienteServiceUsecase;
+import com.postech.challenge.presentation.api.doc.ClienteControllerApiDoc;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
 @RequestMapping("/api/clientes")
 @Tag(name = "Clientes", description = "Endpoints para gerenciamento de clientes")
-public class ClienteControllerApi {
+public class ClienteControllerApi extends ClienteControllerApiDoc {
+
 
     private final ClienteServiceUsecase clienteService;
 
@@ -32,26 +34,31 @@ public class ClienteControllerApi {
     }
 
     @GetMapping
+    @Override
     public ResponseEntity<List<ClienteResponseDTO>> findAll() {
         return ResponseEntity.ok(clienteService.findAll());
     }
 
     @GetMapping("/{id}")
+    @Override
     public ResponseEntity<ClienteResponseDTO> findById(@PathVariable UUID id) {
         return ResponseEntity.ok(clienteService.findById(id));
     }
 
     @PostMapping
+    @Override
     public ResponseEntity<ClienteResponseDTO> create(@RequestBody ClienteRequestDTO request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(clienteService.create(request));
     }
 
     @PutMapping("/{id}")
+    @Override
     public ResponseEntity<ClienteResponseDTO> update(@PathVariable UUID id, @RequestBody ClienteRequestDTO request) {
         return ResponseEntity.ok(clienteService.update(id, request));
     }
 
     @DeleteMapping("/{id}")
+    @Override
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         clienteService.delete(id);
         return ResponseEntity.noContent().build();
