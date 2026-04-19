@@ -154,7 +154,7 @@ public class OrdemServicoServiceUsecaseImpl extends OrdemServicoServiceUsecase {
             return StatusOrdemServico.valueOf(status.toUpperCase());
         } catch (IllegalArgumentException | NullPointerException ex) {
             throw new IllegalArgumentException(
-                    "Invalid status: " + status + ". Allowed values: ABERTA, EM_ANDAMENTO, AGUARDANDO_PECAS, CONCLUIDA, CANCELADA");
+                    "Invalid status: " + status + ". Allowed values: RECEBIDA, EM_DIAGNOSTICO, AGUARDANDO_APROVACAO, EM_EXECUCAO, FINALIZADA, ENTREGUE");
         }
     }
 }

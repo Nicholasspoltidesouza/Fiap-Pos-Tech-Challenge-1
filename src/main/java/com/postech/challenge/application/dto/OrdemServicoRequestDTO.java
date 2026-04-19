@@ -15,7 +15,7 @@ public record OrdemServicoRequestDTO(
         @Schema(description = "ID do veículo", example = "22222222-2222-2222-2222-222222222221")
         UUID veiculoId,
 
-        @Schema(description = "Status da ordem de serviço", example = "ABERTA")
+        @Schema(description = "Status da ordem de serviço", example = "RECEBIDA")
         String status,
 
         @Schema(description = "Data e hora de abertura", example = "2026-04-19T10:30:00")

@@ -28,6 +28,11 @@ public class VeiculoRepositoryImpl extends VeiculoRepository {
     }
 
     @Override
+    public Optional<VeiculoEntity> findByPlaca(String placa) {
+        return veiculoJpaRepository.findByPlaca(placa);
+    }
+
+    @Override
     public VeiculoEntity save(VeiculoEntity veiculo) {
         return veiculoJpaRepository.save(veiculo);
     }
@@ -35,6 +40,11 @@ public class VeiculoRepositoryImpl extends VeiculoRepository {
     @Override
     public boolean existsById(UUID id) {
         return veiculoJpaRepository.existsById(id);
+    }
+
+    @Override
+    public boolean existsByPlaca(String placa) {
+        return veiculoJpaRepository.existsByPlaca(placa);
     }
 
     @Override

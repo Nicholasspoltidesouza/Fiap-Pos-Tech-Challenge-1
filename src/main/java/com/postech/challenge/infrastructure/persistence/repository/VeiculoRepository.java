@@ -11,9 +11,13 @@ public abstract class VeiculoRepository {
 
     public abstract Optional<VeiculoEntity> findById(UUID id);
 
+    public abstract Optional<VeiculoEntity> findByPlaca(String placa);
+
     public abstract VeiculoEntity save(VeiculoEntity veiculo);
 
     public abstract boolean existsById(UUID id);
+
+    public abstract boolean existsByPlaca(String placa);
 
     public abstract void deleteById(UUID id);
 }

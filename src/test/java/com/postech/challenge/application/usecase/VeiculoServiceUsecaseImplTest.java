@@ -45,7 +45,7 @@ class VeiculoServiceUsecaseImplTest {
 
     @Test
     void shouldFindAllVeiculos() {
-        VeiculoEntity veiculo = buildVeiculoEntity("Toyota", "Corolla", 2020, UUID.randomUUID());
+        VeiculoEntity veiculo = buildVeiculoEntity("Toyota", "Corolla", "ABC1D23", 2020, UUID.randomUUID());
         VeiculoResponseDTO response = buildVeiculoResponse(veiculo);
 
         when(veiculoRepository.findAll()).thenReturn(List.of(veiculo));
@@ -62,7 +62,7 @@ class VeiculoServiceUsecaseImplTest {
     @Test
     void shouldFindVeiculoById() {
         UUID id = UUID.randomUUID();
-        VeiculoEntity veiculo = buildVeiculoEntity(id, "Honda", "Civic", 2019, UUID.randomUUID());
+        VeiculoEntity veiculo = buildVeiculoEntity(id, "Honda", "Civic", "DEF2G34", 2019, UUID.randomUUID());
         VeiculoResponseDTO response = buildVeiculoResponse(veiculo);
 
         when(veiculoRepository.findById(id)).thenReturn(Optional.of(veiculo));
@@ -91,13 +91,14 @@ class VeiculoServiceUsecaseImplTest {
     @Test
     void shouldCreateVeiculo() {
         UUID clienteId = UUID.randomUUID();
-        VeiculoRequestDTO request = new VeiculoRequestDTO("Chevrolet", "Onix", 2022, clienteId);
+        VeiculoRequestDTO request = new VeiculoRequestDTO("Chevrolet", "Onix", "GHI3J45", 2022, clienteId);
         ClienteEntity cliente = buildClienteEntity(clienteId);
-        VeiculoEntity entityToSave = buildVeiculoEntity("Chevrolet", "Onix", 2022, clienteId);
-        VeiculoEntity savedEntity = buildVeiculoEntity("Chevrolet", "Onix", 2022, clienteId);
+        VeiculoEntity entityToSave = buildVeiculoEntity("Chevrolet", "Onix", "GHI3J45", 2022, clienteId);
+        VeiculoEntity savedEntity = buildVeiculoEntity("Chevrolet", "Onix", "GHI3J45", 2022, clienteId);
         VeiculoResponseDTO response = buildVeiculoResponse(savedEntity);
 
         when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(cliente));
+        when(veiculoRepository.existsByPlaca("GHI3J45")).thenReturn(false);
         when(veiculoDataMapper.toEntity(request, cliente)).thenReturn(entityToSave);
         when(veiculoRepository.save(entityToSave)).thenReturn(savedEntity);
         when(veiculoDataMapper.toResponse(savedEntity)).thenReturn(response);
@@ -114,7 +115,8 @@ class VeiculoServiceUsecaseImplTest {
     @Test
     void shouldThrowWhenCreateAndClienteDoesNotExist() {
         UUID clienteId = UUID.randomUUID();
-        VeiculoRequestDTO request = new VeiculoRequestDTO("Chevrolet", "Onix", 2022, clienteId);
+        VeiculoRequestDTO request = new VeiculoRequestDTO("Chevrolet", "Onix", "GHI3J45", 2022, clienteId);
+        when(veiculoRepository.existsByPlaca("GHI3J45")).thenReturn(false);
         when(clienteRepository.findById(clienteId)).thenReturn(Optional.empty());
 
         EntityNotFoundException exception = assertThrows(
@@ -130,12 +132,13 @@ class VeiculoServiceUsecaseImplTest {
     void shouldUpdateVeiculo() {
         UUID id = UUID.randomUUID();
         UUID clienteId = UUID.randomUUID();
-        VeiculoRequestDTO request = new VeiculoRequestDTO("Hyundai", "HB20", 2023, clienteId);
-        VeiculoEntity existing = buildVeiculoEntity(id, "Fiat", "Argo", 2018, UUID.randomUUID());
+        VeiculoRequestDTO request = new VeiculoRequestDTO("Hyundai", "HB20", "JKL4M56", 2023, clienteId);
+        VeiculoEntity existing = buildVeiculoEntity(id, "Fiat", "Argo", "ZZZ9Z99", 2018, UUID.randomUUID());
         ClienteEntity cliente = buildClienteEntity(clienteId);
-        VeiculoResponseDTO response = new VeiculoResponseDTO(id, "Hyundai", "HB20", 2023, clienteId);
+        VeiculoResponseDTO response = new VeiculoResponseDTO(id, "Hyundai", "HB20", "JKL4M56", 2023, clienteId);
 
         when(veiculoRepository.findById(id)).thenReturn(Optional.of(existing));
+        when(veiculoRepository.existsByPlaca("JKL4M56")).thenReturn(false);
         when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(cliente));
         when(veiculoRepository.save(existing)).thenReturn(existing);
         when(veiculoDataMapper.toResponse(existing)).thenReturn(response);
@@ -153,7 +156,7 @@ class VeiculoServiceUsecaseImplTest {
     @Test
     void shouldThrowWhenUpdateAndVeiculoDoesNotExist() {
         UUID id = UUID.randomUUID();
-        VeiculoRequestDTO request = new VeiculoRequestDTO("Hyundai", "HB20", 2023, UUID.randomUUID());
+        VeiculoRequestDTO request = new VeiculoRequestDTO("Hyundai", "HB20", "JKL4M56", 2023, UUID.randomUUID());
         when(veiculoRepository.findById(id)).thenReturn(Optional.empty());
 
         EntityNotFoundException exception = assertThrows(
@@ -169,10 +172,11 @@ class VeiculoServiceUsecaseImplTest {
     void shouldThrowWhenUpdateAndClienteDoesNotExist() {
         UUID id = UUID.randomUUID();
         UUID clienteId = UUID.randomUUID();
-        VeiculoRequestDTO request = new VeiculoRequestDTO("Hyundai", "HB20", 2023, clienteId);
-        VeiculoEntity existing = buildVeiculoEntity(id, "Fiat", "Argo", 2018, UUID.randomUUID());
+        VeiculoRequestDTO request = new VeiculoRequestDTO("Hyundai", "HB20", "JKL4M56", 2023, clienteId);
+        VeiculoEntity existing = buildVeiculoEntity(id, "Fiat", "Argo", "ZZZ9Z99", 2018, UUID.randomUUID());
 
         when(veiculoRepository.findById(id)).thenReturn(Optional.of(existing));
+        when(veiculoRepository.existsByPlaca("JKL4M56")).thenReturn(false);
         when(clienteRepository.findById(clienteId)).thenReturn(Optional.empty());
 
         EntityNotFoundException exception = assertThrows(
@@ -182,6 +186,32 @@ class VeiculoServiceUsecaseImplTest {
         assertTrue(exception.getMessage().contains("Cliente not found"));
         verify(veiculoRepository).findById(id);
         verify(clienteRepository).findById(clienteId);
+        verify(veiculoRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldThrowWhenCreateAndPlacaIsInvalid() {
+        VeiculoRequestDTO request = new VeiculoRequestDTO("Toyota", "Corolla", "INVALIDA", 2020, UUID.randomUUID());
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> veiculoServiceUsecase.create(request));
+
+        assertTrue(exception.getMessage().contains("Invalid placa format"));
+        verify(veiculoRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldThrowWhenCreateAndPlacaAlreadyExists() {
+        UUID clienteId = UUID.randomUUID();
+        VeiculoRequestDTO request = new VeiculoRequestDTO("Toyota", "Corolla", "ABC1D23", 2020, clienteId);
+        when(veiculoRepository.existsByPlaca("ABC1D23")).thenReturn(true);
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> veiculoServiceUsecase.create(request));
+
+        assertTrue(exception.getMessage().contains("Placa already registered"));
         verify(veiculoRepository, never()).save(any());
     }
 
@@ -210,15 +240,16 @@ class VeiculoServiceUsecaseImplTest {
         verify(veiculoRepository, never()).deleteById(id);
     }
 
-    private VeiculoEntity buildVeiculoEntity(String marca, String modelo, Integer ano, UUID clienteId) {
-        return buildVeiculoEntity(UUID.randomUUID(), marca, modelo, ano, clienteId);
+    private VeiculoEntity buildVeiculoEntity(String marca, String modelo, String placa, Integer ano, UUID clienteId) {
+        return buildVeiculoEntity(UUID.randomUUID(), marca, modelo, placa, ano, clienteId);
     }
 
-    private VeiculoEntity buildVeiculoEntity(UUID id, String marca, String modelo, Integer ano, UUID clienteId) {
+    private VeiculoEntity buildVeiculoEntity(UUID id, String marca, String modelo, String placa, Integer ano, UUID clienteId) {
         VeiculoEntity veiculo = new VeiculoEntity();
         veiculo.setId(id);
         veiculo.setMarca(marca);
         veiculo.setModelo(modelo);
+        veiculo.setPlaca(placa);
         veiculo.setAno(ano);
         veiculo.setCliente(buildClienteEntity(clienteId));
         return veiculo;
@@ -235,6 +266,7 @@ class VeiculoServiceUsecaseImplTest {
                 veiculo.getId(),
                 veiculo.getMarca(),
                 veiculo.getModelo(),
+                veiculo.getPlaca(),
                 veiculo.getAno(),
                 veiculo.getCliente().getId());
     }

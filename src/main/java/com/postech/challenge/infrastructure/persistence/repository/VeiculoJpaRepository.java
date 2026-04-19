@@ -1,5 +1,6 @@
 package com.postech.challenge.infrastructure.persistence.repository;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -7,4 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import com.postech.challenge.infrastructure.persistence.entity.VeiculoEntity;
 
 public interface VeiculoJpaRepository extends JpaRepository<VeiculoEntity, UUID> {
+    Optional<VeiculoEntity> findByPlaca(String placa);
+
+    boolean existsByPlaca(String placa);
 }

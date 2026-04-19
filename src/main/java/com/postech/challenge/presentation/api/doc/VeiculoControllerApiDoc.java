@@ -34,6 +34,7 @@ public abstract class VeiculoControllerApiDoc {
                                         "id": "22222222-2222-2222-2222-222222222221",
                                         "marca": "Toyota",
                                         "modelo": "Corolla",
+                                        "placa": "ABC1D23",
                                         "ano": 2020,
                                         "clienteId": "11111111-1111-1111-1111-111111111111"
                                       }
@@ -89,6 +90,7 @@ public abstract class VeiculoControllerApiDoc {
                                     {
                                       "marca": "Honda",
                                       "modelo": "Civic",
+                                      "placa": "DEF2G34",
                                       "ano": 2019,
                                       "clienteId": "11111111-1111-1111-1111-111111111111"
                                     }

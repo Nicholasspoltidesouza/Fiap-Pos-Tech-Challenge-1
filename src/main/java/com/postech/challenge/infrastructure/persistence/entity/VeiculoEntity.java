@@ -27,6 +27,9 @@ public class VeiculoEntity {
     @Column(nullable = false, length = 50)
     private String modelo; 
 
+    @Column(unique = true, length = 8)
+    private String placa;
+
     @Column(nullable = false)
     private Integer ano; 
 
@@ -64,6 +67,14 @@ public class VeiculoEntity {
 
     public void setAno(Integer ano) {
         this.ano = ano;
+    }
+
+    public String getPlaca() {
+        return placa;
+    }
+
+    public void setPlaca(String placa) {
+        this.placa = placa;
     }
 
     public ClienteEntity getCliente() {

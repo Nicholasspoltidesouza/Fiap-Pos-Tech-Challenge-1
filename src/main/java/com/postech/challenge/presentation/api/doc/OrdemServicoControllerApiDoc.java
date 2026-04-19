@@ -63,7 +63,7 @@ public abstract class OrdemServicoControllerApiDoc {
                                     {
                                       "clienteId": "11111111-1111-1111-1111-111111111111",
                                       "veiculoId": "22222222-2222-2222-2222-222222222221",
-                                      "status": "ABERTA",
+                                      "status": "RECEBIDA",
                                       "dataAbertura": "2026-04-19T10:30:00",
                                       "dataFinalizacao": null,
                                       "servicosSolicitadosIds": ["33333333-3333-3333-3333-333333333331"],

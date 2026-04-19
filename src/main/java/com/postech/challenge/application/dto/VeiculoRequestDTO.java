@@ -13,6 +13,9 @@ public record VeiculoRequestDTO(
         @Schema(description = "Modelo do veiculo", example = "Corolla")
         String modelo,
 
+        @Schema(description = "Placa do veiculo", example = "ABC1D23")
+        String placa,
+
         @Schema(description = "Ano do veiculo", example = "2020")
         Integer ano,
 

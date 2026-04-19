@@ -17,6 +17,8 @@ import jakarta.persistence.EntityNotFoundException;
 
 @Service
 public class VeiculoServiceUsecaseImpl extends VeiculoServiceUsecase {
+    private static final String PLACA_PATTERN = "^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$";
+
 
     private final VeiculoRepository veiculoRepository;
     private final ClienteRepository clienteRepository;
@@ -48,8 +50,14 @@ public class VeiculoServiceUsecaseImpl extends VeiculoServiceUsecase {
 
     @Override
     public VeiculoResponseDTO create(VeiculoRequestDTO request) {
+        String placaNormalizada = normalizeAndValidatePlaca(request.placa());
+        if (veiculoRepository.existsByPlaca(placaNormalizada)) {
+            throw new IllegalArgumentException("Placa already registered: " + placaNormalizada);
+        }
+
         ClienteEntity cliente = findClienteById(request.clienteId());
-        VeiculoEntity veiculo = veiculoDataMapper.toEntity(request, cliente);
+        VeiculoRequestDTO normalizedRequest = withNormalizedPlaca(request, placaNormalizada);
+        VeiculoEntity veiculo = veiculoDataMapper.toEntity(normalizedRequest, cliente);
         return veiculoDataMapper.toResponse(veiculoRepository.save(veiculo));
     }
 
@@ -58,8 +66,15 @@ public class VeiculoServiceUsecaseImpl extends VeiculoServiceUsecase {
         VeiculoEntity veiculo = veiculoRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Veiculo not found: " + id));
 
+        String placaNormalizada = normalizeAndValidatePlaca(request.placa());
+        if (!placaNormalizada.equals(veiculo.getPlaca())
+                && veiculoRepository.existsByPlaca(placaNormalizada)) {
+            throw new IllegalArgumentException("Placa already registered: " + placaNormalizada);
+        }
+
         ClienteEntity cliente = findClienteById(request.clienteId());
-        veiculoDataMapper.updateEntity(veiculo, request, cliente);
+        VeiculoRequestDTO normalizedRequest = withNormalizedPlaca(request, placaNormalizada);
+        veiculoDataMapper.updateEntity(veiculo, normalizedRequest, cliente);
         return veiculoDataMapper.toResponse(veiculoRepository.save(veiculo));
     }
 
@@ -74,5 +89,28 @@ public class VeiculoServiceUsecaseImpl extends VeiculoServiceUsecase {
     private ClienteEntity findClienteById(UUID clienteId) {
         return clienteRepository.findById(clienteId)
                 .orElseThrow(() -> new EntityNotFoundException("Cliente not found: " + clienteId));
+    }
+
+    private VeiculoRequestDTO withNormalizedPlaca(VeiculoRequestDTO request, String placaNormalizada) {
+        return new VeiculoRequestDTO(
+                request.marca(),
+                request.modelo(),
+                placaNormalizada,
+                request.ano(),
+                request.clienteId());
+    }
+
+    private String normalizeAndValidatePlaca(String placa) {
+        if (placa == null || placa.isBlank()) {
+            throw new IllegalArgumentException("Placa is required");
+        }
+
+        String placaNormalizada = placa.toUpperCase().replace("-", "").trim();
+        if (!placaNormalizada.matches(PLACA_PATTERN)) {
+            throw new IllegalArgumentException(
+                    "Invalid placa format: " + placa + ". Use format like ABC1234 or ABC1D23");
+        }
+
+        return placaNormalizada;
     }
 }

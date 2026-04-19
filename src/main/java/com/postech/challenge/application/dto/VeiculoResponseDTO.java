@@ -6,6 +6,7 @@ public record VeiculoResponseDTO(
         UUID id,
         String marca,
         String modelo,
+        String placa,
         Integer ano,
         UUID clienteId
 ) {

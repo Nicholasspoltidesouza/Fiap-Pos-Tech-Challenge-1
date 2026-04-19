@@ -15,6 +15,7 @@ public class VeiculoDataMapper {
                 veiculo.getId(),
                 veiculo.getMarca(),
                 veiculo.getModelo(),
+                veiculo.getPlaca(),
                 veiculo.getAno(),
                 veiculo.getCliente().getId()
         );
@@ -24,6 +25,7 @@ public class VeiculoDataMapper {
         VeiculoEntity veiculo = new VeiculoEntity();
         veiculo.setMarca(request.marca());
         veiculo.setModelo(request.modelo());
+        veiculo.setPlaca(request.placa());
         veiculo.setAno(request.ano());
         veiculo.setCliente(cliente);
         return veiculo;
@@ -32,6 +34,7 @@ public class VeiculoDataMapper {
     public void updateEntity(VeiculoEntity veiculo, VeiculoRequestDTO request, ClienteEntity cliente) {
         veiculo.setMarca(request.marca());
         veiculo.setModelo(request.modelo());
+        veiculo.setPlaca(request.placa());
         veiculo.setAno(request.ano());
         veiculo.setCliente(cliente);
     }

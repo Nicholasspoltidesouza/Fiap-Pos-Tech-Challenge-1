@@ -103,7 +103,7 @@ class OrdemServicoServiceUsecaseImplTest {
         UUID veiculoId = UUID.randomUUID();
         UUID servicoId = UUID.randomUUID();
         UUID insumoId = UUID.randomUUID();
-        OrdemServicoRequestDTO request = buildRequest(clienteId, veiculoId, servicoId, insumoId, "ABERTA");
+        OrdemServicoRequestDTO request = buildRequest(clienteId, veiculoId, servicoId, insumoId, "RECEBIDA");
 
         ClienteEntity cliente = buildCliente(clienteId);
         VeiculoEntity veiculo = buildVeiculo(veiculoId);
@@ -157,7 +157,7 @@ class OrdemServicoServiceUsecaseImplTest {
         UUID veiculoId = UUID.randomUUID();
         UUID servicoId = UUID.randomUUID();
         UUID insumoId = UUID.randomUUID();
-        OrdemServicoRequestDTO request = buildRequest(clienteId, veiculoId, servicoId, insumoId, "CONCLUIDA");
+        OrdemServicoRequestDTO request = buildRequest(clienteId, veiculoId, servicoId, insumoId, "FINALIZADA");
 
         OrdemServicoEntity existing = buildOrdemEntity(ordemId);
         ClienteEntity cliente = buildCliente(clienteId);
@@ -186,7 +186,7 @@ class OrdemServicoServiceUsecaseImplTest {
     void shouldThrowWhenUpdateAndOrdemDoesNotExist() {
         UUID id = UUID.randomUUID();
         OrdemServicoRequestDTO request = buildRequest(
-                UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), "ABERTA");
+                UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), "RECEBIDA");
         when(ordemServicoRepository.findById(id)).thenReturn(Optional.empty());
 
         EntityNotFoundException exception = assertThrows(
@@ -241,7 +241,7 @@ class OrdemServicoServiceUsecaseImplTest {
         ordem.setId(id);
         ordem.setCliente(buildCliente(UUID.randomUUID()));
         ordem.setVeiculo(buildVeiculo(UUID.randomUUID()));
-        ordem.setStatus(StatusOrdemServico.ABERTA);
+        ordem.setStatus(StatusOrdemServico.RECEBIDA);
         ordem.setDataAbertura(LocalDateTime.now());
         ordem.setDataFinalizacao(null);
         ordem.setServicosSolicitados(List.of(buildServico(UUID.randomUUID())));
@@ -254,7 +254,7 @@ class OrdemServicoServiceUsecaseImplTest {
                 id,
                 UUID.randomUUID(),
                 UUID.randomUUID(),
-                "ABERTA",
+                "RECEBIDA",
                 LocalDateTime.now(),
                 null,
                 List.of(UUID.randomUUID()),

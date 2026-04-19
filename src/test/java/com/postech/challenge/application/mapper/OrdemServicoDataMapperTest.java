@@ -34,7 +34,7 @@ class OrdemServicoDataMapperTest {
         entity.setId(ordemId);
         entity.setCliente(buildCliente(clienteId));
         entity.setVeiculo(buildVeiculo(veiculoId));
-        entity.setStatus(StatusOrdemServico.EM_ANDAMENTO);
+        entity.setStatus(StatusOrdemServico.EM_EXECUCAO);
         entity.setDataAbertura(dataAbertura);
         entity.setDataFinalizacao(dataFinalizacao);
         entity.setServicosSolicitados(List.of(buildServico(servicoId)));
@@ -45,7 +45,7 @@ class OrdemServicoDataMapperTest {
         assertEquals(ordemId, response.id());
         assertEquals(clienteId, response.clienteId());
         assertEquals(veiculoId, response.veiculoId());
-        assertEquals("EM_ANDAMENTO", response.status());
+        assertEquals("EM_EXECUCAO", response.status());
         assertEquals(dataAbertura, response.dataAbertura());
         assertEquals(dataFinalizacao, response.dataFinalizacao());
         assertEquals(List.of(servicoId), response.servicosSolicitadosIds());
@@ -67,7 +67,7 @@ class OrdemServicoDataMapperTest {
         OrdemServicoEntity entity = ordemServicoDataMapper.toEntity(
                 cliente,
                 veiculo,
-                StatusOrdemServico.ABERTA,
+                StatusOrdemServico.RECEBIDA,
                 dataAbertura,
                 dataFinalizacao,
                 servicos,
@@ -76,7 +76,7 @@ class OrdemServicoDataMapperTest {
 
         assertEquals(clienteId, entity.getCliente().getId());
         assertEquals(veiculoId, entity.getVeiculo().getId());
-        assertEquals(StatusOrdemServico.ABERTA, entity.getStatus());
+        assertEquals(StatusOrdemServico.RECEBIDA, entity.getStatus());
         assertEquals(dataAbertura, entity.getDataAbertura());
         assertEquals(dataFinalizacao, entity.getDataFinalizacao());
         assertEquals(1, entity.getServicosSolicitados().size());
@@ -86,7 +86,7 @@ class OrdemServicoDataMapperTest {
     @Test
     void shouldUpdateEntity() {
         OrdemServicoEntity entity = new OrdemServicoEntity();
-        entity.setStatus(StatusOrdemServico.ABERTA);
+        entity.setStatus(StatusOrdemServico.RECEBIDA);
 
         LocalDateTime dataAbertura = LocalDateTime.now();
         LocalDateTime dataFinalizacao = dataAbertura.plusHours(3);
@@ -97,7 +97,7 @@ class OrdemServicoDataMapperTest {
                 entity,
                 buildCliente(clienteId),
                 buildVeiculo(veiculoId),
-                StatusOrdemServico.CONCLUIDA,
+                StatusOrdemServico.FINALIZADA,
                 dataAbertura,
                 dataFinalizacao,
                 List.of(buildServico(UUID.randomUUID())),
@@ -106,7 +106,7 @@ class OrdemServicoDataMapperTest {
 
         assertEquals(clienteId, entity.getCliente().getId());
         assertEquals(veiculoId, entity.getVeiculo().getId());
-        assertEquals(StatusOrdemServico.CONCLUIDA, entity.getStatus());
+        assertEquals(StatusOrdemServico.FINALIZADA, entity.getStatus());
         assertEquals(dataAbertura, entity.getDataAbertura());
         assertEquals(dataFinalizacao, entity.getDataFinalizacao());
         assertEquals(1, entity.getServicosSolicitados().size());
