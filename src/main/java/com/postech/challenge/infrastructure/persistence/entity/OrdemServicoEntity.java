@@ -1,6 +1,8 @@
 package com.postech.challenge.infrastructure.persistence.entity;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import jakarta.persistence.Column;
@@ -12,6 +14,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
@@ -31,6 +35,13 @@ public class OrdemServicoEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "veiculo_id", nullable = false)
     private VeiculoEntity veiculo;
+
+    @ManyToMany
+    @JoinTable(
+            name = "tb_ordem_servico_servico",
+            joinColumns = @JoinColumn(name = "ordem_servico_id"),
+            inverseJoinColumns = @JoinColumn(name = "servico_id"))
+    private List<ServicoEntity> servicosSolicitados = new ArrayList<>();
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
@@ -64,6 +75,14 @@ public class OrdemServicoEntity {
 
     public void setVeiculo(VeiculoEntity veiculo) {
         this.veiculo = veiculo;
+    }
+
+    public List<ServicoEntity> getServicosSolicitados() {
+        return servicosSolicitados;
+    }
+
+    public void setServicosSolicitados(List<ServicoEntity> servicosSolicitados) {
+        this.servicosSolicitados = servicosSolicitados;
     }
 
     public StatusOrdemServico getStatus() {
