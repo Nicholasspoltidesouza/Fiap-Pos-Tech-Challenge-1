@@ -34,7 +34,7 @@ public class OrdemServicoEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
-    private String status; 
+    private StatusOrdemServico status;
 
     @Column(name = "data_abertura", nullable = false)
     private LocalDateTime dataAbertura;
@@ -66,11 +66,11 @@ public class OrdemServicoEntity {
         this.veiculo = veiculo;
     }
 
-    public String getStatus() {
+    public StatusOrdemServico getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(StatusOrdemServico status) {
         this.status = status;
     }
 
