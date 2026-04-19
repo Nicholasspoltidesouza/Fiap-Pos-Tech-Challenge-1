@@ -13,6 +13,7 @@ import com.postech.challenge.application.dto.AcompanhamentoOrdemServicoResponseD
 import com.postech.challenge.application.dto.OrdemServicoCreateByClienteRequestDTO;
 import com.postech.challenge.application.dto.OrdemServicoRequestDTO;
 import com.postech.challenge.application.dto.OrdemServicoResponseDTO;
+import com.postech.challenge.application.gateway.OrcamentoNotificacaoGateway;
 import com.postech.challenge.application.mapper.OrdemServicoDataMapper;
 import com.postech.challenge.application.validator.CpfCnpjValidator;
 import com.postech.challenge.infrastructure.persistence.entity.ClienteEntity;
@@ -43,6 +44,7 @@ public class OrdemServicoServiceUsecaseImpl extends OrdemServicoServiceUsecase {
     private final InsumoRepository insumoRepository;
     private final PecaRepository pecaRepository;
     private final OrdemServicoDataMapper ordemServicoDataMapper;
+    private final OrcamentoNotificacaoGateway orcamentoNotificacaoGateway;
 
     public OrdemServicoServiceUsecaseImpl(
             OrdemServicoRepository ordemServicoRepository,
@@ -51,7 +53,8 @@ public class OrdemServicoServiceUsecaseImpl extends OrdemServicoServiceUsecase {
             ServicoRepository servicoRepository,
             InsumoRepository insumoRepository,
             PecaRepository pecaRepository,
-            OrdemServicoDataMapper ordemServicoDataMapper) {
+            OrdemServicoDataMapper ordemServicoDataMapper,
+            OrcamentoNotificacaoGateway orcamentoNotificacaoGateway) {
         this.ordemServicoRepository = ordemServicoRepository;
         this.clienteRepository = clienteRepository;
         this.veiculoRepository = veiculoRepository;
@@ -59,6 +62,7 @@ public class OrdemServicoServiceUsecaseImpl extends OrdemServicoServiceUsecase {
         this.insumoRepository = insumoRepository;
         this.pecaRepository = pecaRepository;
         this.ordemServicoDataMapper = ordemServicoDataMapper;
+        this.orcamentoNotificacaoGateway = orcamentoNotificacaoGateway;
     }
 
     @Override
@@ -174,6 +178,7 @@ public class OrdemServicoServiceUsecaseImpl extends OrdemServicoServiceUsecase {
     @Override
     public OrdemServicoResponseDTO iniciarDiagnostico(UUID id) {
         OrdemServicoEntity ordemServico = getOrdemServicoById(id);
+        validateStatusForAction(ordemServico, List.of(StatusOrdemServico.RECEBIDA), "iniciar diagnostico");
         ordemServico.setStatus(StatusOrdemServico.EM_DIAGNOSTICO);
         return ordemServicoDataMapper.toResponse(ordemServicoRepository.save(ordemServico));
     }
@@ -181,23 +186,34 @@ public class OrdemServicoServiceUsecaseImpl extends OrdemServicoServiceUsecase {
     @Override
     public OrdemServicoResponseDTO enviarOrcamento(UUID id) {
         OrdemServicoEntity ordemServico = getOrdemServicoById(id);
+        validateStatusForAction(ordemServico, List.of(StatusOrdemServico.EM_DIAGNOSTICO), "enviar orcamento");
         ordemServico.setValorOrcamento(calculateOrcamento(ordemServico.getServicosSolicitados(), ordemServico.getPecasSolicitadas()));
         ordemServico.setDataEnvioOrcamento(LocalDateTime.now());
         ordemServico.setStatus(StatusOrdemServico.AGUARDANDO_APROVACAO);
-        return ordemServicoDataMapper.toResponse(ordemServicoRepository.save(ordemServico));
+        OrdemServicoEntity ordemAtualizada = ordemServicoRepository.save(ordemServico);
+        orcamentoNotificacaoGateway.enviarOrcamento(ordemAtualizada);
+        return ordemServicoDataMapper.toResponse(ordemAtualizada);
     }
 
     @Override
     public OrdemServicoResponseDTO aprovarOrcamento(UUID id, boolean aprovado) {
         OrdemServicoEntity ordemServico = getOrdemServicoById(id);
+        validateStatusForAction(ordemServico, List.of(StatusOrdemServico.AGUARDANDO_APROVACAO), "aprovar orcamento");
         ordemServico.setOrcamentoAprovado(aprovado);
-        ordemServico.setStatus(aprovado ? StatusOrdemServico.EM_EXECUCAO : StatusOrdemServico.RECEBIDA);
+        if (aprovado) {
+            consumirEstoquePecas(ordemServico.getPecasSolicitadas());
+            consumirEstoqueInsumos(ordemServico.getInsumosSolicitados());
+            ordemServico.setStatus(StatusOrdemServico.EM_EXECUCAO);
+        } else {
+            ordemServico.setStatus(StatusOrdemServico.RECEBIDA);
+        }
         return ordemServicoDataMapper.toResponse(ordemServicoRepository.save(ordemServico));
     }
 
     @Override
     public OrdemServicoResponseDTO finalizar(UUID id) {
         OrdemServicoEntity ordemServico = getOrdemServicoById(id);
+        validateStatusForAction(ordemServico, List.of(StatusOrdemServico.EM_EXECUCAO), "finalizar ordem");
         ordemServico.setStatus(StatusOrdemServico.FINALIZADA);
         ordemServico.setDataFinalizacao(LocalDateTime.now());
         return ordemServicoDataMapper.toResponse(ordemServicoRepository.save(ordemServico));
@@ -206,9 +222,7 @@ public class OrdemServicoServiceUsecaseImpl extends OrdemServicoServiceUsecase {
     @Override
     public OrdemServicoResponseDTO entregar(UUID id) {
         OrdemServicoEntity ordemServico = getOrdemServicoById(id);
-        if (ordemServico.getStatus() != StatusOrdemServico.FINALIZADA) {
-            throw new IllegalStateException("Ordem de servico must be FINALIZADA before ENTREGUE");
-        }
+        validateStatusForAction(ordemServico, List.of(StatusOrdemServico.FINALIZADA), "entregar ordem");
         ordemServico.setStatus(StatusOrdemServico.ENTREGUE);
         return ordemServicoDataMapper.toResponse(ordemServicoRepository.save(ordemServico));
     }
@@ -320,6 +334,39 @@ public class OrdemServicoServiceUsecaseImpl extends OrdemServicoServiceUsecase {
                 .map(valor -> valor == null ? BigDecimal.ZERO : valor)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         return valorServicos.add(valorPecas);
+    }
+
+    private void consumirEstoquePecas(List<PecaEntity> pecas) {
+        for (PecaEntity peca : pecas) {
+            int estoqueAtual = Optional.ofNullable(peca.getQuantidadeEstoque()).orElse(0);
+            if (estoqueAtual <= 0) {
+                throw new IllegalStateException("Insufficient stock for peca: " + peca.getNome());
+            }
+            peca.setQuantidadeEstoque(estoqueAtual - 1);
+            pecaRepository.save(peca);
+        }
+    }
+
+    private void consumirEstoqueInsumos(List<InsumoEntity> insumos) {
+        for (InsumoEntity insumo : insumos) {
+            int estoqueAtual = Optional.ofNullable(insumo.getQuantidadeEstoque()).orElse(0);
+            if (estoqueAtual <= 0) {
+                throw new IllegalStateException("Insufficient stock for insumo: " + insumo.getNome());
+            }
+            insumo.setQuantidadeEstoque(estoqueAtual - 1);
+            insumoRepository.save(insumo);
+        }
+    }
+
+    private void validateStatusForAction(
+            OrdemServicoEntity ordemServico,
+            List<StatusOrdemServico> allowedStatus,
+            String actionName) {
+        if (!allowedStatus.contains(ordemServico.getStatus())) {
+            throw new IllegalStateException(
+                    "Cannot " + actionName + " when status is " + ordemServico.getStatus()
+                            + ". Allowed: " + allowedStatus);
+        }
     }
 
     private StatusOrdemServico parseStatusOrDefault(String status, StatusOrdemServico defaultValue) {

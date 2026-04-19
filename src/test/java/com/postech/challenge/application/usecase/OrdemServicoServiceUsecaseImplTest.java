@@ -22,6 +22,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.postech.challenge.application.dto.OrdemServicoRequestDTO;
 import com.postech.challenge.application.dto.OrdemServicoResponseDTO;
+import com.postech.challenge.application.gateway.OrcamentoNotificacaoGateway;
 import com.postech.challenge.application.mapper.OrdemServicoDataMapper;
 import com.postech.challenge.infrastructure.persistence.entity.ClienteEntity;
 import com.postech.challenge.infrastructure.persistence.entity.InsumoEntity;
@@ -56,6 +57,8 @@ class OrdemServicoServiceUsecaseImplTest {
     private PecaRepository pecaRepository;
     @Mock
     private OrdemServicoDataMapper ordemServicoDataMapper;
+    @Mock
+    private OrcamentoNotificacaoGateway orcamentoNotificacaoGateway;
 
     @InjectMocks
     private OrdemServicoServiceUsecaseImpl ordemServicoService;
@@ -230,6 +233,74 @@ class OrdemServicoServiceUsecaseImplTest {
 
         assertTrue(exception.getMessage().contains("OrdemServico not found"));
         verify(ordemServicoRepository, never()).deleteById(id);
+    }
+
+    @Test
+    void shouldEnviarOrcamentoWhenStatusIsEmDiagnostico() {
+        UUID ordemId = UUID.randomUUID();
+        OrdemServicoEntity ordem = buildOrdemEntity(ordemId);
+        ordem.setStatus(StatusOrdemServico.EM_DIAGNOSTICO);
+        OrdemServicoResponseDTO response = buildResponse(ordemId);
+
+        when(ordemServicoRepository.findById(ordemId)).thenReturn(Optional.of(ordem));
+        when(ordemServicoRepository.save(ordem)).thenReturn(ordem);
+        when(ordemServicoDataMapper.toResponse(ordem)).thenReturn(response);
+
+        OrdemServicoResponseDTO result = ordemServicoService.enviarOrcamento(ordemId);
+
+        assertEquals(response, result);
+        assertEquals(StatusOrdemServico.AGUARDANDO_APROVACAO, ordem.getStatus());
+        verify(ordemServicoRepository).save(ordem);
+        verify(orcamentoNotificacaoGateway).enviarOrcamento(ordem);
+    }
+
+    @Test
+    void shouldAprovarOrcamentoAndConsumeStock() {
+        UUID ordemId = UUID.randomUUID();
+        OrdemServicoEntity ordem = buildOrdemEntity(ordemId);
+        ordem.setStatus(StatusOrdemServico.AGUARDANDO_APROVACAO);
+        PecaEntity peca = buildPeca(UUID.randomUUID());
+        peca.setQuantidadeEstoque(2);
+        InsumoEntity insumo = buildInsumo(UUID.randomUUID());
+        insumo.setQuantidadeEstoque(3);
+        ordem.setPecasSolicitadas(List.of(peca));
+        ordem.setInsumosSolicitados(List.of(insumo));
+        OrdemServicoResponseDTO response = buildResponse(ordemId);
+
+        when(ordemServicoRepository.findById(ordemId)).thenReturn(Optional.of(ordem));
+        when(pecaRepository.save(peca)).thenReturn(peca);
+        when(insumoRepository.save(insumo)).thenReturn(insumo);
+        when(ordemServicoRepository.save(ordem)).thenReturn(ordem);
+        when(ordemServicoDataMapper.toResponse(ordem)).thenReturn(response);
+
+        OrdemServicoResponseDTO result = ordemServicoService.aprovarOrcamento(ordemId, true);
+
+        assertEquals(response, result);
+        assertEquals(StatusOrdemServico.EM_EXECUCAO, ordem.getStatus());
+        assertEquals(1, peca.getQuantidadeEstoque());
+        assertEquals(2, insumo.getQuantidadeEstoque());
+        verify(pecaRepository).save(peca);
+        verify(insumoRepository).save(insumo);
+        verify(ordemServicoRepository).save(ordem);
+    }
+
+    @Test
+    void shouldThrowWhenAprovarOrcamentoAndPecaStockIsInsufficient() {
+        UUID ordemId = UUID.randomUUID();
+        OrdemServicoEntity ordem = buildOrdemEntity(ordemId);
+        ordem.setStatus(StatusOrdemServico.AGUARDANDO_APROVACAO);
+        PecaEntity peca = buildPeca(UUID.randomUUID());
+        peca.setQuantidadeEstoque(0);
+        ordem.setPecasSolicitadas(List.of(peca));
+
+        when(ordemServicoRepository.findById(ordemId)).thenReturn(Optional.of(ordem));
+
+        IllegalStateException exception = assertThrows(
+                IllegalStateException.class,
+                () -> ordemServicoService.aprovarOrcamento(ordemId, true));
+
+        assertTrue(exception.getMessage().contains("Insufficient stock for peca"));
+        verify(ordemServicoRepository, never()).save(any());
     }
 
     private OrdemServicoRequestDTO buildRequest(
