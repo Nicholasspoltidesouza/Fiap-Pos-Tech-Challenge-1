@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -14,6 +15,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.postech.challenge.application.dto.AtualizarPecasOrdemServicoRequestDTO;
+import com.postech.challenge.application.dto.OrcamentoAprovacaoRequestDTO;
+import com.postech.challenge.application.dto.OrdemServicoCreateByClienteRequestDTO;
 import com.postech.challenge.application.dto.OrdemServicoRequestDTO;
 import com.postech.challenge.application.dto.OrdemServicoResponseDTO;
 import com.postech.challenge.application.usecase.OrdemServicoServiceUsecase;
@@ -50,12 +54,52 @@ public class OrdemServicoControllerApi extends OrdemServicoControllerApiDoc {
         return ResponseEntity.status(HttpStatus.CREATED).body(ordemServicoService.create(request));
     }
 
+    @PostMapping("/cliente")
+    public ResponseEntity<OrdemServicoResponseDTO> createByClienteCpfCnpj(
+            @RequestBody OrdemServicoCreateByClienteRequestDTO request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(ordemServicoService.createByClienteCpfCnpj(request));
+    }
+
     @PutMapping("/{id}")
     @Override
     public ResponseEntity<OrdemServicoResponseDTO> update(
             @PathVariable UUID id,
             @RequestBody OrdemServicoRequestDTO request) {
         return ResponseEntity.ok(ordemServicoService.update(id, request));
+    }
+
+    @PatchMapping("/{id}/pecas")
+    public ResponseEntity<OrdemServicoResponseDTO> adicionarPecas(
+            @PathVariable UUID id,
+            @RequestBody AtualizarPecasOrdemServicoRequestDTO request) {
+        return ResponseEntity.ok(ordemServicoService.adicionarPecas(id, request.pecasIds()));
+    }
+
+    @PatchMapping("/{id}/diagnostico/iniciar")
+    public ResponseEntity<OrdemServicoResponseDTO> iniciarDiagnostico(@PathVariable UUID id) {
+        return ResponseEntity.ok(ordemServicoService.iniciarDiagnostico(id));
+    }
+
+    @PatchMapping("/{id}/orcamento/enviar")
+    public ResponseEntity<OrdemServicoResponseDTO> enviarOrcamento(@PathVariable UUID id) {
+        return ResponseEntity.ok(ordemServicoService.enviarOrcamento(id));
+    }
+
+    @PatchMapping("/{id}/orcamento/aprovacao")
+    public ResponseEntity<OrdemServicoResponseDTO> aprovarOrcamento(
+            @PathVariable UUID id,
+            @RequestBody OrcamentoAprovacaoRequestDTO request) {
+        return ResponseEntity.ok(ordemServicoService.aprovarOrcamento(id, request.aprovado()));
+    }
+
+    @PatchMapping("/{id}/finalizar")
+    public ResponseEntity<OrdemServicoResponseDTO> finalizar(@PathVariable UUID id) {
+        return ResponseEntity.ok(ordemServicoService.finalizar(id));
+    }
+
+    @PatchMapping("/{id}/entregar")
+    public ResponseEntity<OrdemServicoResponseDTO> entregar(@PathVariable UUID id) {
+        return ResponseEntity.ok(ordemServicoService.entregar(id));
     }
 
     @DeleteMapping("/{id}")

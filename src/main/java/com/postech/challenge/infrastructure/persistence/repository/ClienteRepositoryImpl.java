@@ -28,6 +28,11 @@ public class ClienteRepositoryImpl extends ClienteRepository {
     }
 
     @Override
+    public Optional<ClienteEntity> findByCpfCnpj(String cpfCnpj) {
+        return clienteJpaRepository.findByCpfCnpj(cpfCnpj);
+    }
+
+    @Override
     public ClienteEntity save(ClienteEntity cliente) {
         return clienteJpaRepository.save(cliente);
     }

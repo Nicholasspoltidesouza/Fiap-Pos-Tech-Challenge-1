@@ -28,6 +28,9 @@ public record OrdemServicoRequestDTO(
         List<UUID> servicosSolicitadosIds,
 
         @Schema(description = "Lista de IDs dos insumos solicitados")
-        List<UUID> insumosSolicitadosIds
+        List<UUID> insumosSolicitadosIds,
+
+        @Schema(description = "Lista de IDs das peças solicitadas")
+        List<UUID> pecasSolicitadasIds
 ) {
 }

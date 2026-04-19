@@ -8,6 +8,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -25,12 +26,14 @@ import com.postech.challenge.application.mapper.OrdemServicoDataMapper;
 import com.postech.challenge.infrastructure.persistence.entity.ClienteEntity;
 import com.postech.challenge.infrastructure.persistence.entity.InsumoEntity;
 import com.postech.challenge.infrastructure.persistence.entity.OrdemServicoEntity;
+import com.postech.challenge.infrastructure.persistence.entity.PecaEntity;
 import com.postech.challenge.infrastructure.persistence.entity.ServicoEntity;
 import com.postech.challenge.infrastructure.persistence.entity.StatusOrdemServico;
 import com.postech.challenge.infrastructure.persistence.entity.VeiculoEntity;
 import com.postech.challenge.infrastructure.persistence.repository.ClienteRepository;
 import com.postech.challenge.infrastructure.persistence.repository.InsumoRepository;
 import com.postech.challenge.infrastructure.persistence.repository.OrdemServicoRepository;
+import com.postech.challenge.infrastructure.persistence.repository.PecaRepository;
 import com.postech.challenge.infrastructure.persistence.repository.ServicoRepository;
 import com.postech.challenge.infrastructure.persistence.repository.VeiculoRepository;
 
@@ -49,6 +52,8 @@ class OrdemServicoServiceUsecaseImplTest {
     private ServicoRepository servicoRepository;
     @Mock
     private InsumoRepository insumoRepository;
+    @Mock
+    private PecaRepository pecaRepository;
     @Mock
     private OrdemServicoDataMapper ordemServicoDataMapper;
 
@@ -103,12 +108,14 @@ class OrdemServicoServiceUsecaseImplTest {
         UUID veiculoId = UUID.randomUUID();
         UUID servicoId = UUID.randomUUID();
         UUID insumoId = UUID.randomUUID();
-        OrdemServicoRequestDTO request = buildRequest(clienteId, veiculoId, servicoId, insumoId, "RECEBIDA");
+        UUID pecaId = UUID.randomUUID();
+        OrdemServicoRequestDTO request = buildRequest(clienteId, veiculoId, servicoId, insumoId, pecaId, "RECEBIDA");
 
         ClienteEntity cliente = buildCliente(clienteId);
         VeiculoEntity veiculo = buildVeiculo(veiculoId);
         ServicoEntity servico = buildServico(servicoId);
         InsumoEntity insumo = buildInsumo(insumoId);
+        PecaEntity peca = buildPeca(pecaId);
         OrdemServicoEntity entityToSave = buildOrdemEntity(UUID.randomUUID());
         OrdemServicoEntity savedEntity = buildOrdemEntity(UUID.randomUUID());
         OrdemServicoResponseDTO response = buildResponse(savedEntity.getId());
@@ -117,8 +124,9 @@ class OrdemServicoServiceUsecaseImplTest {
         when(veiculoRepository.findById(veiculoId)).thenReturn(Optional.of(veiculo));
         when(servicoRepository.findById(servicoId)).thenReturn(Optional.of(servico));
         when(insumoRepository.findById(insumoId)).thenReturn(Optional.of(insumo));
+        when(pecaRepository.findById(pecaId)).thenReturn(Optional.of(peca));
         when(ordemServicoDataMapper.toEntity(
-                any(), any(), any(), any(), any(), any(), any())).thenReturn(entityToSave);
+                any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(entityToSave);
         when(ordemServicoRepository.save(entityToSave)).thenReturn(savedEntity);
         when(ordemServicoDataMapper.toResponse(savedEntity)).thenReturn(response);
 
@@ -129,6 +137,7 @@ class OrdemServicoServiceUsecaseImplTest {
         verify(veiculoRepository).findById(veiculoId);
         verify(servicoRepository).findById(servicoId);
         verify(insumoRepository).findById(insumoId);
+        verify(pecaRepository).findById(pecaId);
         verify(ordemServicoRepository).save(entityToSave);
     }
 
@@ -137,7 +146,7 @@ class OrdemServicoServiceUsecaseImplTest {
         UUID clienteId = UUID.randomUUID();
         UUID veiculoId = UUID.randomUUID();
         OrdemServicoRequestDTO request = buildRequest(
-                clienteId, veiculoId, UUID.randomUUID(), UUID.randomUUID(), "INVALIDO");
+                clienteId, veiculoId, UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), "INVALIDO");
 
         when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(buildCliente(clienteId)));
         when(veiculoRepository.findById(veiculoId)).thenReturn(Optional.of(buildVeiculo(veiculoId)));
@@ -157,13 +166,15 @@ class OrdemServicoServiceUsecaseImplTest {
         UUID veiculoId = UUID.randomUUID();
         UUID servicoId = UUID.randomUUID();
         UUID insumoId = UUID.randomUUID();
-        OrdemServicoRequestDTO request = buildRequest(clienteId, veiculoId, servicoId, insumoId, "FINALIZADA");
+        UUID pecaId = UUID.randomUUID();
+        OrdemServicoRequestDTO request = buildRequest(clienteId, veiculoId, servicoId, insumoId, pecaId, "FINALIZADA");
 
         OrdemServicoEntity existing = buildOrdemEntity(ordemId);
         ClienteEntity cliente = buildCliente(clienteId);
         VeiculoEntity veiculo = buildVeiculo(veiculoId);
         ServicoEntity servico = buildServico(servicoId);
         InsumoEntity insumo = buildInsumo(insumoId);
+        PecaEntity peca = buildPeca(pecaId);
         OrdemServicoResponseDTO response = buildResponse(ordemId);
 
         when(ordemServicoRepository.findById(ordemId)).thenReturn(Optional.of(existing));
@@ -171,6 +182,7 @@ class OrdemServicoServiceUsecaseImplTest {
         when(veiculoRepository.findById(veiculoId)).thenReturn(Optional.of(veiculo));
         when(servicoRepository.findById(servicoId)).thenReturn(Optional.of(servico));
         when(insumoRepository.findById(insumoId)).thenReturn(Optional.of(insumo));
+        when(pecaRepository.findById(pecaId)).thenReturn(Optional.of(peca));
         when(ordemServicoRepository.save(existing)).thenReturn(existing);
         when(ordemServicoDataMapper.toResponse(existing)).thenReturn(response);
 
@@ -178,7 +190,7 @@ class OrdemServicoServiceUsecaseImplTest {
 
         assertEquals(response, result);
         verify(ordemServicoRepository).findById(ordemId);
-        verify(ordemServicoDataMapper).updateEntity(any(), any(), any(), any(), any(), any(), any(), any());
+        verify(ordemServicoDataMapper).updateEntity(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
         verify(ordemServicoRepository).save(existing);
     }
 
@@ -186,7 +198,7 @@ class OrdemServicoServiceUsecaseImplTest {
     void shouldThrowWhenUpdateAndOrdemDoesNotExist() {
         UUID id = UUID.randomUUID();
         OrdemServicoRequestDTO request = buildRequest(
-                UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), "RECEBIDA");
+                UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), "RECEBIDA");
         when(ordemServicoRepository.findById(id)).thenReturn(Optional.empty());
 
         EntityNotFoundException exception = assertThrows(
@@ -225,6 +237,7 @@ class OrdemServicoServiceUsecaseImplTest {
             UUID veiculoId,
             UUID servicoId,
             UUID insumoId,
+            UUID pecaId,
             String status) {
         return new OrdemServicoRequestDTO(
                 clienteId,
@@ -233,7 +246,8 @@ class OrdemServicoServiceUsecaseImplTest {
                 LocalDateTime.now(),
                 null,
                 List.of(servicoId),
-                List.of(insumoId));
+                List.of(insumoId),
+                List.of(pecaId));
     }
 
     private OrdemServicoEntity buildOrdemEntity(UUID id) {
@@ -246,6 +260,7 @@ class OrdemServicoServiceUsecaseImplTest {
         ordem.setDataFinalizacao(null);
         ordem.setServicosSolicitados(List.of(buildServico(UUID.randomUUID())));
         ordem.setInsumosSolicitados(List.of(buildInsumo(UUID.randomUUID())));
+        ordem.setPecasSolicitadas(List.of(buildPeca(UUID.randomUUID())));
         return ordem;
     }
 
@@ -257,6 +272,10 @@ class OrdemServicoServiceUsecaseImplTest {
                 "RECEBIDA",
                 LocalDateTime.now(),
                 null,
+                BigDecimal.valueOf(300),
+                null,
+                null,
+                List.of(UUID.randomUUID()),
                 List.of(UUID.randomUUID()),
                 List.of(UUID.randomUUID()));
     }
@@ -283,5 +302,12 @@ class OrdemServicoServiceUsecaseImplTest {
         InsumoEntity insumo = new InsumoEntity();
         insumo.setId(id);
         return insumo;
+    }
+
+    private PecaEntity buildPeca(UUID id) {
+        PecaEntity peca = new PecaEntity();
+        peca.setId(id);
+        peca.setPrecoUnitario(BigDecimal.TEN);
+        return peca;
     }
 }

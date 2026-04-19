@@ -40,7 +40,7 @@ class ClienteServiceUsecaseImplTest {
 
     @Test
     void shouldFindAllClientes() {
-        ClienteEntity cliente = buildClienteEntity("Joao Silva", "123.456.789-00");
+        ClienteEntity cliente = buildClienteEntity("Joao Silva", "52998224725");
         ClienteResponseDTO response = new ClienteResponseDTO(cliente.getId(), cliente.getNome(), cliente.getCpfCnpj());
 
         when(clienteRepository.findAll()).thenReturn(List.of(cliente));
@@ -57,8 +57,8 @@ class ClienteServiceUsecaseImplTest {
     @Test
     void shouldFindClienteById() {
         UUID id = UUID.randomUUID();
-        ClienteEntity cliente = buildClienteEntity(id, "Maria Oliveira", "234.567.890-11");
-        ClienteResponseDTO response = new ClienteResponseDTO(id, "Maria Oliveira", "234.567.890-11");
+        ClienteEntity cliente = buildClienteEntity(id, "Maria Oliveira", "11144477735");
+        ClienteResponseDTO response = new ClienteResponseDTO(id, "Maria Oliveira", "11144477735");
 
         when(clienteRepository.findById(id)).thenReturn(Optional.of(cliente));
         when(clienteDataMapper.toResponse(cliente)).thenReturn(response);
@@ -85,48 +85,48 @@ class ClienteServiceUsecaseImplTest {
 
     @Test
     void shouldCreateCliente() {
-        ClienteRequestDTO request = new ClienteRequestDTO("Carlos Pereira", "345.678.901-22");
-        ClienteEntity entityToSave = buildClienteEntity("Carlos Pereira", "345.678.901-22");
-        ClienteEntity savedEntity = buildClienteEntity("Carlos Pereira", "345.678.901-22");
+        ClienteRequestDTO request = new ClienteRequestDTO("Carlos Pereira", "529.982.247-25");
+        ClienteEntity entityToSave = buildClienteEntity("Carlos Pereira", "52998224725");
+        ClienteEntity savedEntity = buildClienteEntity("Carlos Pereira", "52998224725");
         ClienteResponseDTO response = new ClienteResponseDTO(
                 savedEntity.getId(),
                 savedEntity.getNome(),
                 savedEntity.getCpfCnpj());
 
-        when(clienteRepository.existsByCpfCnpj(request.cpfCnpj())).thenReturn(false);
-        when(clienteDataMapper.toEntity(request)).thenReturn(entityToSave);
+        when(clienteRepository.existsByCpfCnpj("52998224725")).thenReturn(false);
+        when(clienteDataMapper.toEntity(any(ClienteRequestDTO.class))).thenReturn(entityToSave);
         when(clienteRepository.save(entityToSave)).thenReturn(savedEntity);
         when(clienteDataMapper.toResponse(savedEntity)).thenReturn(response);
 
         ClienteResponseDTO result = clienteServiceUsecase.create(request);
 
         assertEquals(response, result);
-        verify(clienteRepository).existsByCpfCnpj(request.cpfCnpj());
-        verify(clienteDataMapper).toEntity(request);
+        verify(clienteRepository).existsByCpfCnpj("52998224725");
+        verify(clienteDataMapper).toEntity(any(ClienteRequestDTO.class));
         verify(clienteRepository).save(entityToSave);
         verify(clienteDataMapper).toResponse(savedEntity);
     }
 
     @Test
     void shouldThrowWhenCreateAndCpfCnpjAlreadyExists() {
-        ClienteRequestDTO request = new ClienteRequestDTO("Joao Silva", "123.456.789-00");
-        when(clienteRepository.existsByCpfCnpj(request.cpfCnpj())).thenReturn(true);
+        ClienteRequestDTO request = new ClienteRequestDTO("Joao Silva", "529.982.247-25");
+        when(clienteRepository.existsByCpfCnpj("52998224725")).thenReturn(true);
 
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class,
                 () -> clienteServiceUsecase.create(request));
 
         assertTrue(exception.getMessage().contains("CPF/CNPJ already registered"));
-        verify(clienteRepository).existsByCpfCnpj(request.cpfCnpj());
+        verify(clienteRepository).existsByCpfCnpj("52998224725");
         verify(clienteRepository, never()).save(any());
     }
 
     @Test
     void shouldUpdateClienteWhenCpfCnpjIsSame() {
         UUID id = UUID.randomUUID();
-        ClienteRequestDTO request = new ClienteRequestDTO("Joao Atualizado", "123.456.789-00");
-        ClienteEntity existing = buildClienteEntity(id, "Joao Silva", "123.456.789-00");
-        ClienteResponseDTO response = new ClienteResponseDTO(id, "Joao Atualizado", "123.456.789-00");
+        ClienteRequestDTO request = new ClienteRequestDTO("Joao Atualizado", "529.982.247-25");
+        ClienteEntity existing = buildClienteEntity(id, "Joao Silva", "52998224725");
+        ClienteResponseDTO response = new ClienteResponseDTO(id, "Joao Atualizado", "52998224725");
 
         when(clienteRepository.findById(id)).thenReturn(Optional.of(existing));
         when(clienteRepository.save(existing)).thenReturn(existing);
@@ -136,7 +136,7 @@ class ClienteServiceUsecaseImplTest {
 
         assertEquals(response, result);
         verify(clienteRepository).findById(id);
-        verify(clienteDataMapper).updateEntity(existing, request);
+        verify(clienteDataMapper).updateEntity(any(ClienteEntity.class), any(ClienteRequestDTO.class));
         verify(clienteRepository).save(existing);
         verify(clienteDataMapper).toResponse(existing);
         verify(clienteRepository, never()).existsByCpfCnpj(request.cpfCnpj());
@@ -145,7 +145,7 @@ class ClienteServiceUsecaseImplTest {
     @Test
     void shouldThrowWhenUpdateAndClienteDoesNotExist() {
         UUID id = UUID.randomUUID();
-        ClienteRequestDTO request = new ClienteRequestDTO("Novo Nome", "123.456.789-00");
+        ClienteRequestDTO request = new ClienteRequestDTO("Novo Nome", "529.982.247-25");
         when(clienteRepository.findById(id)).thenReturn(Optional.empty());
 
         EntityNotFoundException exception = assertThrows(
@@ -160,11 +160,11 @@ class ClienteServiceUsecaseImplTest {
     @Test
     void shouldThrowWhenUpdateAndCpfCnpjBelongsToAnotherCliente() {
         UUID id = UUID.randomUUID();
-        ClienteRequestDTO request = new ClienteRequestDTO("Joao Atualizado", "999.999.999-99");
-        ClienteEntity existing = buildClienteEntity(id, "Joao Silva", "123.456.789-00");
+        ClienteRequestDTO request = new ClienteRequestDTO("Joao Atualizado", "111.444.777-35");
+        ClienteEntity existing = buildClienteEntity(id, "Joao Silva", "52998224725");
 
         when(clienteRepository.findById(id)).thenReturn(Optional.of(existing));
-        when(clienteRepository.existsByCpfCnpj(request.cpfCnpj())).thenReturn(true);
+        when(clienteRepository.existsByCpfCnpj("11144477735")).thenReturn(true);
 
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class,
@@ -172,7 +172,7 @@ class ClienteServiceUsecaseImplTest {
 
         assertTrue(exception.getMessage().contains("CPF/CNPJ already registered"));
         verify(clienteRepository).findById(id);
-        verify(clienteRepository).existsByCpfCnpj(request.cpfCnpj());
+        verify(clienteRepository).existsByCpfCnpj("11144477735");
         verify(clienteRepository, never()).save(any());
     }
 

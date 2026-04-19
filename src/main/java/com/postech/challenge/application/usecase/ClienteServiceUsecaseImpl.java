@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import com.postech.challenge.application.dto.ClienteRequestDTO;
 import com.postech.challenge.application.dto.ClienteResponseDTO;
 import com.postech.challenge.application.mapper.ClienteDataMapper;
+import com.postech.challenge.application.validator.CpfCnpjValidator;
 import com.postech.challenge.infrastructure.persistence.entity.ClienteEntity;
 import com.postech.challenge.infrastructure.persistence.repository.ClienteRepository;
 
@@ -41,11 +42,12 @@ public class ClienteServiceUsecaseImpl extends ClienteServiceUsecase {
 
     @Override
     public ClienteResponseDTO create(ClienteRequestDTO request) {
-        if (clienteRepository.existsByCpfCnpj(request.cpfCnpj())) {
-            throw new IllegalArgumentException("CPF/CNPJ already registered: " + request.cpfCnpj());
+        String normalizedCpfCnpj = normalizeAndValidateCpfCnpj(request.cpfCnpj());
+        if (clienteRepository.existsByCpfCnpj(normalizedCpfCnpj)) {
+            throw new IllegalArgumentException("CPF/CNPJ already registered: " + normalizedCpfCnpj);
         }
 
-        ClienteEntity cliente = clienteDataMapper.toEntity(request);
+        ClienteEntity cliente = clienteDataMapper.toEntity(withNormalizedCpfCnpj(request, normalizedCpfCnpj));
         return clienteDataMapper.toResponse(clienteRepository.save(cliente));
     }
 
@@ -54,12 +56,13 @@ public class ClienteServiceUsecaseImpl extends ClienteServiceUsecase {
         ClienteEntity cliente = clienteRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cliente not found: " + id));
 
-        if (!cliente.getCpfCnpj().equals(request.cpfCnpj())
-                && clienteRepository.existsByCpfCnpj(request.cpfCnpj())) {
-            throw new IllegalArgumentException("CPF/CNPJ already registered: " + request.cpfCnpj());
+        String normalizedCpfCnpj = normalizeAndValidateCpfCnpj(request.cpfCnpj());
+        if (!cliente.getCpfCnpj().equals(normalizedCpfCnpj)
+                && clienteRepository.existsByCpfCnpj(normalizedCpfCnpj)) {
+            throw new IllegalArgumentException("CPF/CNPJ already registered: " + normalizedCpfCnpj);
         }
 
-        clienteDataMapper.updateEntity(cliente, request);
+        clienteDataMapper.updateEntity(cliente, withNormalizedCpfCnpj(request, normalizedCpfCnpj));
         return clienteDataMapper.toResponse(clienteRepository.save(cliente));
     }
 
@@ -69,5 +72,19 @@ public class ClienteServiceUsecaseImpl extends ClienteServiceUsecase {
             throw new EntityNotFoundException("Cliente not found: " + id);
         }
         clienteRepository.deleteById(id);
+    }
+
+    private String normalizeAndValidateCpfCnpj(String cpfCnpj) {
+        String normalized = CpfCnpjValidator.normalize(cpfCnpj);
+        if (!CpfCnpjValidator.isValid(normalized)) {
+            throw new IllegalArgumentException("Invalid CPF/CNPJ");
+        }
+        return normalized;
+    }
+
+    private ClienteRequestDTO withNormalizedCpfCnpj(ClienteRequestDTO request, String normalizedCpfCnpj) {
+        return new ClienteRequestDTO(
+                request.nome(),
+                normalizedCpfCnpj);
     }
 }

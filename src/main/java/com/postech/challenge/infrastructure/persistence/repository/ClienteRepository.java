@@ -11,6 +11,8 @@ public abstract class ClienteRepository {
 
     public abstract Optional<ClienteEntity> findById(UUID id);
 
+    public abstract Optional<ClienteEntity> findByCpfCnpj(String cpfCnpj);
+
     public abstract ClienteEntity save(ClienteEntity cliente);
 
     public abstract boolean existsById(UUID id);

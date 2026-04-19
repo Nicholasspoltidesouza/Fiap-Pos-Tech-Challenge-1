@@ -12,10 +12,10 @@ import com.postech.challenge.infrastructure.persistence.entity.OrdemServicoEntit
 public interface OrdemServicoJpaRepository extends JpaRepository<OrdemServicoEntity, UUID> {
 
     @Override
-    @EntityGraph(attributePaths = {"cliente", "veiculo", "servicosSolicitados", "insumosSolicitados"})
+    @EntityGraph(attributePaths = {"cliente", "veiculo", "servicosSolicitados", "insumosSolicitados", "pecasSolicitadas"})
     List<OrdemServicoEntity> findAll();
 
     @Override
-    @EntityGraph(attributePaths = {"cliente", "veiculo", "servicosSolicitados", "insumosSolicitados"})
+    @EntityGraph(attributePaths = {"cliente", "veiculo", "servicosSolicitados", "insumosSolicitados", "pecasSolicitadas"})
     Optional<OrdemServicoEntity> findById(UUID id);
 }

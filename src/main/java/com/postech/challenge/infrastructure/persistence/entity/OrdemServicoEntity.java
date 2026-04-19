@@ -1,5 +1,6 @@
 package com.postech.challenge.infrastructure.persistence.entity;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -50,6 +51,13 @@ public class OrdemServicoEntity {
             inverseJoinColumns = @JoinColumn(name = "insumo_id"))
     private List<InsumoEntity> insumosSolicitados = new ArrayList<>();
 
+    @ManyToMany
+    @JoinTable(
+            name = "tb_ordem_servico_peca",
+            joinColumns = @JoinColumn(name = "ordem_servico_id"),
+            inverseJoinColumns = @JoinColumn(name = "peca_id"))
+    private List<PecaEntity> pecasSolicitadas = new ArrayList<>();
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     private StatusOrdemServico status;
@@ -59,6 +67,15 @@ public class OrdemServicoEntity {
 
     @Column(name = "data_finalizacao")
     private LocalDateTime dataFinalizacao;
+
+    @Column(name = "valor_orcamento", precision = 10, scale = 2)
+    private BigDecimal valorOrcamento;
+
+    @Column(name = "orcamento_aprovado")
+    private Boolean orcamentoAprovado;
+
+    @Column(name = "data_envio_orcamento")
+    private LocalDateTime dataEnvioOrcamento;
 
     public UUID getId() {
         return id;
@@ -100,6 +117,14 @@ public class OrdemServicoEntity {
         this.insumosSolicitados = insumosSolicitados;
     }
 
+    public List<PecaEntity> getPecasSolicitadas() {
+        return pecasSolicitadas;
+    }
+
+    public void setPecasSolicitadas(List<PecaEntity> pecasSolicitadas) {
+        this.pecasSolicitadas = pecasSolicitadas;
+    }
+
     public StatusOrdemServico getStatus() {
         return status;
     }
@@ -122,5 +147,29 @@ public class OrdemServicoEntity {
 
     public void setDataFinalizacao(LocalDateTime dataFinalizacao) {
         this.dataFinalizacao = dataFinalizacao;
+    }
+
+    public BigDecimal getValorOrcamento() {
+        return valorOrcamento;
+    }
+
+    public void setValorOrcamento(BigDecimal valorOrcamento) {
+        this.valorOrcamento = valorOrcamento;
+    }
+
+    public Boolean getOrcamentoAprovado() {
+        return orcamentoAprovado;
+    }
+
+    public void setOrcamentoAprovado(Boolean orcamentoAprovado) {
+        this.orcamentoAprovado = orcamentoAprovado;
+    }
+
+    public LocalDateTime getDataEnvioOrcamento() {
+        return dataEnvioOrcamento;
+    }
+
+    public void setDataEnvioOrcamento(LocalDateTime dataEnvioOrcamento) {
+        this.dataEnvioOrcamento = dataEnvioOrcamento;
     }
 }
