@@ -55,6 +55,16 @@ VALUES
     ('33333333-3333-3333-3333-33333333333c'::uuid, 'Limpeza de bicos', 'Limpeza de bicos injetores')
 ON CONFLICT (id) DO NOTHING;
 
+INSERT INTO tb_insumo (id, nome, preco_unitario, quantidade_estoque)
+VALUES
+    ('66666666-6666-6666-6666-666666666661'::uuid, 'Oleo 5W30 1L', 45.90, 120),
+    ('66666666-6666-6666-6666-666666666662'::uuid, 'Filtro de oleo', 32.50, 80),
+    ('66666666-6666-6666-6666-666666666663'::uuid, 'Fluido de freio DOT4', 29.90, 60),
+    ('66666666-6666-6666-6666-666666666664'::uuid, 'Aditivo radiador', 25.00, 40),
+    ('66666666-6666-6666-6666-666666666665'::uuid, 'Palheta limpador', 49.90, 35),
+    ('66666666-6666-6666-6666-666666666666'::uuid, 'Filtro de ar', 39.90, 70)
+ON CONFLICT (id) DO NOTHING;
+
 INSERT INTO tb_ordem_servico (id, cliente_id, veiculo_id, status, data_abertura, data_finalizacao)
 VALUES
     ('44444444-4444-4444-4444-444444444441'::uuid, '11111111-1111-1111-1111-111111111111'::uuid, '22222222-2222-2222-2222-222222222221'::uuid, 'ABERTA', NOW() - INTERVAL '1 day', NULL),
@@ -115,4 +125,22 @@ WHERE NOT EXISTS (
     FROM tb_ordem_servico_servico existing_data
     WHERE existing_data.ordem_servico_id = values_data.ordem_servico_id
       AND existing_data.servico_id = values_data.servico_id
+);
+
+INSERT INTO tb_ordem_servico_insumo (ordem_servico_id, insumo_id)
+SELECT values_data.ordem_servico_id, values_data.insumo_id
+FROM (
+    VALUES
+        ('44444444-4444-4444-4444-444444444441'::uuid, '66666666-6666-6666-6666-666666666661'::uuid),
+        ('44444444-4444-4444-4444-444444444441'::uuid, '66666666-6666-6666-6666-666666666662'::uuid),
+        ('44444444-4444-4444-4444-444444444442'::uuid, '66666666-6666-6666-6666-666666666663'::uuid),
+        ('44444444-4444-4444-4444-444444444443'::uuid, '66666666-6666-6666-6666-666666666664'::uuid),
+        ('44444444-4444-4444-4444-444444444444'::uuid, '66666666-6666-6666-6666-666666666665'::uuid),
+        ('44444444-4444-4444-4444-444444444445'::uuid, '66666666-6666-6666-6666-666666666666'::uuid)
+) AS values_data(ordem_servico_id, insumo_id)
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM tb_ordem_servico_insumo existing_data
+    WHERE existing_data.ordem_servico_id = values_data.ordem_servico_id
+      AND existing_data.insumo_id = values_data.insumo_id
 );

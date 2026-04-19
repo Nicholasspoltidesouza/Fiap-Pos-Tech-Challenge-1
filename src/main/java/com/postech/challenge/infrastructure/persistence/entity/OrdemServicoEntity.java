@@ -43,6 +43,13 @@ public class OrdemServicoEntity {
             inverseJoinColumns = @JoinColumn(name = "servico_id"))
     private List<ServicoEntity> servicosSolicitados = new ArrayList<>();
 
+    @ManyToMany
+    @JoinTable(
+            name = "tb_ordem_servico_insumo",
+            joinColumns = @JoinColumn(name = "ordem_servico_id"),
+            inverseJoinColumns = @JoinColumn(name = "insumo_id"))
+    private List<InsumoEntity> insumosSolicitados = new ArrayList<>();
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     private StatusOrdemServico status;
@@ -83,6 +90,14 @@ public class OrdemServicoEntity {
 
     public void setServicosSolicitados(List<ServicoEntity> servicosSolicitados) {
         this.servicosSolicitados = servicosSolicitados;
+    }
+
+    public List<InsumoEntity> getInsumosSolicitados() {
+        return insumosSolicitados;
+    }
+
+    public void setInsumosSolicitados(List<InsumoEntity> insumosSolicitados) {
+        this.insumosSolicitados = insumosSolicitados;
     }
 
     public StatusOrdemServico getStatus() {

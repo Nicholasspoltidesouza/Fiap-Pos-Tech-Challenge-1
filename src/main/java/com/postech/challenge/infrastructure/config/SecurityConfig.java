@@ -54,6 +54,11 @@ public class SecurityConfig {
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
                         .requestMatchers("/api/clientes/**").hasAnyRole("ADMIN", "ATENDENTE")
                         .requestMatchers("/api/pecas/**").hasAnyRole("ADMIN", "ATENDENTE", "MECANICO")
+                        .requestMatchers("/api/insumos/**").hasAnyRole("ADMIN", "ATENDENTE", "MECANICO")
+                        .requestMatchers("/api/servicos/**").hasAnyRole("ADMIN", "ATENDENTE", "MECANICO")
+                        .requestMatchers("/api/ordens-servico/**").hasAnyRole("ADMIN", "ATENDENTE", "MECANICO")
+                        .requestMatchers("/api/ordem-servico/**").hasAnyRole("ADMIN", "ATENDENTE", "MECANICO")
+                        .requestMatchers("/api/veiculos/**").hasAnyRole("ADMIN", "ATENDENTE")
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
