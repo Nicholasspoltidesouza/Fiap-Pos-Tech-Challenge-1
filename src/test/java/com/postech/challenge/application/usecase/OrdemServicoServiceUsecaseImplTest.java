@@ -16,10 +16,12 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.postech.challenge.application.dto.OrdemServicoCreateByClienteRequestDTO;
 import com.postech.challenge.application.dto.OrdemServicoRequestDTO;
 import com.postech.challenge.application.dto.OrdemServicoResponseDTO;
 import com.postech.challenge.application.gateway.OrcamentoNotificacaoGateway;
@@ -163,6 +165,135 @@ class OrdemServicoServiceUsecaseImplTest {
     }
 
     @Test
+    void shouldCreateWithDefaultStatusWhenStatusIsNull() {
+        UUID clienteId = UUID.randomUUID();
+        UUID veiculoId = UUID.randomUUID();
+        OrdemServicoRequestDTO request = new OrdemServicoRequestDTO(
+                clienteId,
+                veiculoId,
+                null,
+                LocalDateTime.now(),
+                null,
+                List.of(),
+                List.of(),
+                List.of());
+        ClienteEntity cliente = buildCliente(clienteId);
+        VeiculoEntity veiculo = buildVeiculo(veiculoId);
+        OrdemServicoEntity entityToSave = buildOrdemEntity(UUID.randomUUID());
+        OrdemServicoEntity savedEntity = buildOrdemEntity(UUID.randomUUID());
+        OrdemServicoResponseDTO response = buildResponse(savedEntity.getId());
+
+        when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(cliente));
+        when(veiculoRepository.findById(veiculoId)).thenReturn(Optional.of(veiculo));
+        when(ordemServicoDataMapper.toEntity(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(entityToSave);
+        when(ordemServicoRepository.save(entityToSave)).thenReturn(savedEntity);
+        when(ordemServicoDataMapper.toResponse(savedEntity)).thenReturn(response);
+
+        OrdemServicoResponseDTO result = ordemServicoService.create(request);
+
+        assertEquals(response, result);
+        ArgumentCaptor<StatusOrdemServico> statusCaptor = ArgumentCaptor.forClass(StatusOrdemServico.class);
+        verify(ordemServicoDataMapper).toEntity(
+                any(), any(), statusCaptor.capture(), any(), any(), any(), any(), any(), any(), any(), any());
+        assertEquals(StatusOrdemServico.RECEBIDA, statusCaptor.getValue());
+    }
+
+    @Test
+    void shouldCreateWithoutResolvingItemsWhenListsAreNull() {
+        UUID clienteId = UUID.randomUUID();
+        UUID veiculoId = UUID.randomUUID();
+        OrdemServicoRequestDTO request = new OrdemServicoRequestDTO(
+                clienteId,
+                veiculoId,
+                "RECEBIDA",
+                LocalDateTime.now(),
+                null,
+                null,
+                null,
+                null);
+        ClienteEntity cliente = buildCliente(clienteId);
+        VeiculoEntity veiculo = buildVeiculo(veiculoId);
+        OrdemServicoEntity entityToSave = buildOrdemEntity(UUID.randomUUID());
+        OrdemServicoEntity savedEntity = buildOrdemEntity(UUID.randomUUID());
+        OrdemServicoResponseDTO response = buildResponse(savedEntity.getId());
+
+        when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(cliente));
+        when(veiculoRepository.findById(veiculoId)).thenReturn(Optional.of(veiculo));
+        when(ordemServicoDataMapper.toEntity(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(entityToSave);
+        when(ordemServicoRepository.save(entityToSave)).thenReturn(savedEntity);
+        when(ordemServicoDataMapper.toResponse(savedEntity)).thenReturn(response);
+
+        OrdemServicoResponseDTO result = ordemServicoService.create(request);
+
+        assertEquals(response, result);
+        verify(servicoRepository, never()).findById(any());
+        verify(insumoRepository, never()).findById(any());
+        verify(pecaRepository, never()).findById(any());
+    }
+
+    @Test
+    void shouldThrowWhenCreateAndServicoNotFound() {
+        UUID clienteId = UUID.randomUUID();
+        UUID veiculoId = UUID.randomUUID();
+        UUID servicoId = UUID.randomUUID();
+        OrdemServicoRequestDTO request = buildRequest(clienteId, veiculoId, servicoId, UUID.randomUUID(), UUID.randomUUID(), "RECEBIDA");
+
+        when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(buildCliente(clienteId)));
+        when(veiculoRepository.findById(veiculoId)).thenReturn(Optional.of(buildVeiculo(veiculoId)));
+        when(servicoRepository.findById(servicoId)).thenReturn(Optional.empty());
+
+        EntityNotFoundException exception = assertThrows(
+                EntityNotFoundException.class,
+                () -> ordemServicoService.create(request));
+
+        assertTrue(exception.getMessage().contains("Servico not found"));
+    }
+
+    @Test
+    void shouldThrowWhenCreateAndInsumoNotFound() {
+        UUID clienteId = UUID.randomUUID();
+        UUID veiculoId = UUID.randomUUID();
+        UUID servicoId = UUID.randomUUID();
+        UUID insumoId = UUID.randomUUID();
+        OrdemServicoRequestDTO request = buildRequest(clienteId, veiculoId, servicoId, insumoId, UUID.randomUUID(), "RECEBIDA");
+
+        when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(buildCliente(clienteId)));
+        when(veiculoRepository.findById(veiculoId)).thenReturn(Optional.of(buildVeiculo(veiculoId)));
+        when(servicoRepository.findById(servicoId)).thenReturn(Optional.of(buildServico(servicoId)));
+        when(insumoRepository.findById(insumoId)).thenReturn(Optional.empty());
+
+        EntityNotFoundException exception = assertThrows(
+                EntityNotFoundException.class,
+                () -> ordemServicoService.create(request));
+
+        assertTrue(exception.getMessage().contains("Insumo not found"));
+    }
+
+    @Test
+    void shouldThrowWhenCreateAndPecaNotFound() {
+        UUID clienteId = UUID.randomUUID();
+        UUID veiculoId = UUID.randomUUID();
+        UUID servicoId = UUID.randomUUID();
+        UUID insumoId = UUID.randomUUID();
+        UUID pecaId = UUID.randomUUID();
+        OrdemServicoRequestDTO request = buildRequest(clienteId, veiculoId, servicoId, insumoId, pecaId, "RECEBIDA");
+
+        when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(buildCliente(clienteId)));
+        when(veiculoRepository.findById(veiculoId)).thenReturn(Optional.of(buildVeiculo(veiculoId)));
+        when(servicoRepository.findById(servicoId)).thenReturn(Optional.of(buildServico(servicoId)));
+        when(insumoRepository.findById(insumoId)).thenReturn(Optional.of(buildInsumo(insumoId)));
+        when(pecaRepository.findById(pecaId)).thenReturn(Optional.empty());
+
+        EntityNotFoundException exception = assertThrows(
+                EntityNotFoundException.class,
+                () -> ordemServicoService.create(request));
+
+        assertTrue(exception.getMessage().contains("Peca not found"));
+    }
+
+    @Test
     void shouldUpdateOrdemServico() {
         UUID ordemId = UUID.randomUUID();
         UUID clienteId = UUID.randomUUID();
@@ -303,6 +434,315 @@ class OrdemServicoServiceUsecaseImplTest {
         verify(ordemServicoRepository, never()).save(any());
     }
 
+    @Test
+    void shouldThrowWhenAprovarOrcamentoAndInsumoStockIsInsufficient() {
+        UUID ordemId = UUID.randomUUID();
+        OrdemServicoEntity ordem = buildOrdemEntity(ordemId);
+        ordem.setStatus(StatusOrdemServico.AGUARDANDO_APROVACAO);
+        PecaEntity peca = buildPeca(UUID.randomUUID());
+        peca.setQuantidadeEstoque(2);
+        InsumoEntity insumo = buildInsumo(UUID.randomUUID());
+        insumo.setQuantidadeEstoque(0);
+        ordem.setPecasSolicitadas(List.of(peca));
+        ordem.setInsumosSolicitados(List.of(insumo));
+
+        when(ordemServicoRepository.findById(ordemId)).thenReturn(Optional.of(ordem));
+        when(pecaRepository.save(peca)).thenReturn(peca);
+
+        IllegalStateException exception = assertThrows(
+                IllegalStateException.class,
+                () -> ordemServicoService.aprovarOrcamento(ordemId, true));
+
+        assertTrue(exception.getMessage().contains("Insufficient stock for insumo"));
+        verify(ordemServicoRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldAprovarOrcamentoFalseAndReturnToRecebida() {
+        UUID ordemId = UUID.randomUUID();
+        OrdemServicoEntity ordem = buildOrdemEntity(ordemId);
+        ordem.setStatus(StatusOrdemServico.AGUARDANDO_APROVACAO);
+        OrdemServicoResponseDTO response = buildResponse(ordemId);
+
+        when(ordemServicoRepository.findById(ordemId)).thenReturn(Optional.of(ordem));
+        when(ordemServicoRepository.save(ordem)).thenReturn(ordem);
+        when(ordemServicoDataMapper.toResponse(ordem)).thenReturn(response);
+
+        OrdemServicoResponseDTO result = ordemServicoService.aprovarOrcamento(ordemId, false);
+
+        assertEquals(response, result);
+        assertEquals(StatusOrdemServico.RECEBIDA, ordem.getStatus());
+        verify(ordemServicoRepository).save(ordem);
+    }
+
+    @Test
+    void shouldAdicionarPecasAndRecalculateOrcamento() {
+        UUID ordemId = UUID.randomUUID();
+        UUID pecaId = UUID.randomUUID();
+        OrdemServicoEntity ordem = buildOrdemEntity(ordemId);
+        ordem.setServicosSolicitados(List.of(buildServico(UUID.randomUUID()), buildServico(UUID.randomUUID())));
+        PecaEntity peca = buildPeca(pecaId);
+        peca.setPrecoUnitario(BigDecimal.valueOf(120));
+        OrdemServicoResponseDTO response = buildResponse(ordemId);
+
+        when(ordemServicoRepository.findById(ordemId)).thenReturn(Optional.of(ordem));
+        when(pecaRepository.findById(pecaId)).thenReturn(Optional.of(peca));
+        when(ordemServicoRepository.save(ordem)).thenReturn(ordem);
+        when(ordemServicoDataMapper.toResponse(ordem)).thenReturn(response);
+
+        OrdemServicoResponseDTO result = ordemServicoService.adicionarPecas(ordemId, List.of(pecaId));
+
+        assertEquals(response, result);
+        assertEquals(1, ordem.getPecasSolicitadas().size());
+        assertEquals(BigDecimal.valueOf(420), ordem.getValorOrcamento());
+    }
+
+    @Test
+    void shouldCreateByClienteCpfCnpjWithExistingVeiculo() {
+        UUID clienteId = UUID.randomUUID();
+        UUID veiculoId = UUID.randomUUID();
+        UUID servicoId = UUID.randomUUID();
+        UUID pecaId = UUID.randomUUID();
+        UUID insumoId = UUID.randomUUID();
+        ClienteEntity cliente = buildCliente(clienteId);
+        cliente.setCpfCnpj("52998224725");
+        VeiculoEntity veiculo = buildVeiculo(veiculoId);
+        veiculo.setCliente(cliente);
+        veiculo.setPlaca("ABC1D23");
+        ServicoEntity servico = buildServico(servicoId);
+        PecaEntity peca = buildPeca(pecaId);
+        InsumoEntity insumo = buildInsumo(insumoId);
+        OrdemServicoEntity entityToSave = buildOrdemEntity(UUID.randomUUID());
+        OrdemServicoEntity saved = buildOrdemEntity(UUID.randomUUID());
+        OrdemServicoResponseDTO response = buildResponse(saved.getId());
+        OrdemServicoCreateByClienteRequestDTO request = buildCreateByClienteRequest(
+                "529.982.247-25",
+                "ABC-1D23",
+                servicoId,
+                insumoId,
+                pecaId);
+
+        when(clienteRepository.findByCpfCnpj("52998224725")).thenReturn(Optional.of(cliente));
+        when(veiculoRepository.findByPlaca("ABC1D23")).thenReturn(Optional.of(veiculo));
+        when(servicoRepository.findById(servicoId)).thenReturn(Optional.of(servico));
+        when(insumoRepository.findById(insumoId)).thenReturn(Optional.of(insumo));
+        when(pecaRepository.findById(pecaId)).thenReturn(Optional.of(peca));
+        when(ordemServicoDataMapper.toEntity(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(entityToSave);
+        when(ordemServicoRepository.save(entityToSave)).thenReturn(saved);
+        when(ordemServicoDataMapper.toResponse(saved)).thenReturn(response);
+
+        OrdemServicoResponseDTO result = ordemServicoService.createByClienteCpfCnpj(request);
+
+        assertEquals(response, result);
+        verify(veiculoRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldCreateByClienteCpfCnpjAndCreateVeiculoWhenNotExists() {
+        UUID clienteId = UUID.randomUUID();
+        UUID servicoId = UUID.randomUUID();
+        UUID pecaId = UUID.randomUUID();
+        UUID insumoId = UUID.randomUUID();
+        ClienteEntity cliente = buildCliente(clienteId);
+        cliente.setCpfCnpj("52998224725");
+        VeiculoEntity novoVeiculo = buildVeiculo(UUID.randomUUID());
+        ServicoEntity servico = buildServico(servicoId);
+        PecaEntity peca = buildPeca(pecaId);
+        InsumoEntity insumo = buildInsumo(insumoId);
+        OrdemServicoEntity entityToSave = buildOrdemEntity(UUID.randomUUID());
+        OrdemServicoEntity saved = buildOrdemEntity(UUID.randomUUID());
+        OrdemServicoResponseDTO response = buildResponse(saved.getId());
+        OrdemServicoCreateByClienteRequestDTO request = buildCreateByClienteRequest(
+                "52998224725",
+                "ABC1D23",
+                servicoId,
+                insumoId,
+                pecaId);
+
+        when(clienteRepository.findByCpfCnpj("52998224725")).thenReturn(Optional.of(cliente));
+        when(veiculoRepository.findByPlaca("ABC1D23")).thenReturn(Optional.empty());
+        when(veiculoRepository.save(any(VeiculoEntity.class))).thenReturn(novoVeiculo);
+        when(servicoRepository.findById(servicoId)).thenReturn(Optional.of(servico));
+        when(insumoRepository.findById(insumoId)).thenReturn(Optional.of(insumo));
+        when(pecaRepository.findById(pecaId)).thenReturn(Optional.of(peca));
+        when(ordemServicoDataMapper.toEntity(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(entityToSave);
+        when(ordemServicoRepository.save(entityToSave)).thenReturn(saved);
+        when(ordemServicoDataMapper.toResponse(saved)).thenReturn(response);
+
+        OrdemServicoResponseDTO result = ordemServicoService.createByClienteCpfCnpj(request);
+
+        assertEquals(response, result);
+        verify(veiculoRepository).save(any(VeiculoEntity.class));
+    }
+
+    @Test
+    void shouldThrowWhenCreateByClienteCpfCnpjAndVeiculoFromAnotherCliente() {
+        UUID clienteId = UUID.randomUUID();
+        ClienteEntity cliente = buildCliente(clienteId);
+        cliente.setCpfCnpj("52998224725");
+        ClienteEntity outroCliente = buildCliente(UUID.randomUUID());
+        VeiculoEntity veiculo = buildVeiculo(UUID.randomUUID());
+        veiculo.setCliente(outroCliente);
+        veiculo.setPlaca("ABC1D23");
+        OrdemServicoCreateByClienteRequestDTO request = buildCreateByClienteRequest(
+                "52998224725",
+                "ABC1D23",
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                UUID.randomUUID());
+
+        when(clienteRepository.findByCpfCnpj("52998224725")).thenReturn(Optional.of(cliente));
+        when(veiculoRepository.findByPlaca("ABC1D23")).thenReturn(Optional.of(veiculo));
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> ordemServicoService.createByClienteCpfCnpj(request));
+
+        assertTrue(exception.getMessage().contains("Placa already linked"));
+    }
+
+    @Test
+    void shouldThrowWhenCreateByClienteCpfCnpjAndPlateFormatIsInvalid() {
+        ClienteEntity cliente = buildCliente(UUID.randomUUID());
+        cliente.setCpfCnpj("52998224725");
+        OrdemServicoCreateByClienteRequestDTO request = buildCreateByClienteRequest(
+                "52998224725",
+                "PLACAINVALIDA",
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                UUID.randomUUID());
+
+        when(clienteRepository.findByCpfCnpj("52998224725")).thenReturn(Optional.of(cliente));
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> ordemServicoService.createByClienteCpfCnpj(request));
+
+        assertTrue(exception.getMessage().contains("Invalid placa format"));
+    }
+
+    @Test
+    void shouldThrowWhenCreateByClienteCpfCnpjAndPlacaIsBlank() {
+        ClienteEntity cliente = buildCliente(UUID.randomUUID());
+        cliente.setCpfCnpj("52998224725");
+        OrdemServicoCreateByClienteRequestDTO request = buildCreateByClienteRequest(
+                "52998224725",
+                "   ",
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                UUID.randomUUID());
+
+        when(clienteRepository.findByCpfCnpj("52998224725")).thenReturn(Optional.of(cliente));
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> ordemServicoService.createByClienteCpfCnpj(request));
+
+        assertTrue(exception.getMessage().contains("Placa is required"));
+    }
+
+    @Test
+    void shouldThrowWhenCreateByClienteCpfCnpjAndVeiculoDataMissingForNewPlate() {
+        ClienteEntity cliente = buildCliente(UUID.randomUUID());
+        cliente.setCpfCnpj("52998224725");
+        OrdemServicoCreateByClienteRequestDTO request = new OrdemServicoCreateByClienteRequestDTO(
+                "52998224725",
+                "ABC1D23",
+                null,
+                "Corolla",
+                2022,
+                List.of(UUID.randomUUID()),
+                List.of(UUID.randomUUID()),
+                List.of(UUID.randomUUID()));
+
+        when(clienteRepository.findByCpfCnpj("52998224725")).thenReturn(Optional.of(cliente));
+        when(veiculoRepository.findByPlaca("ABC1D23")).thenReturn(Optional.empty());
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> ordemServicoService.createByClienteCpfCnpj(request));
+
+        assertTrue(exception.getMessage().contains("Veiculo data is required"));
+    }
+
+    @Test
+    void shouldThrowWhenCreateByClienteCpfCnpjAndCpfCnpjIsInvalid() {
+        OrdemServicoCreateByClienteRequestDTO request = buildCreateByClienteRequest(
+                "11111111111",
+                "ABC1D23",
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                UUID.randomUUID());
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> ordemServicoService.createByClienteCpfCnpj(request));
+
+        assertTrue(exception.getMessage().contains("Invalid CPF/CNPJ"));
+        verify(clienteRepository, never()).findByCpfCnpj(any());
+    }
+
+    @Test
+    void shouldThrowWhenIniciarDiagnosticoWithInvalidStatus() {
+        UUID ordemId = UUID.randomUUID();
+        OrdemServicoEntity ordem = buildOrdemEntity(ordemId);
+        ordem.setStatus(StatusOrdemServico.EM_EXECUCAO);
+        when(ordemServicoRepository.findById(ordemId)).thenReturn(Optional.of(ordem));
+
+        IllegalStateException exception = assertThrows(
+                IllegalStateException.class,
+                () -> ordemServicoService.iniciarDiagnostico(ordemId));
+
+        assertTrue(exception.getMessage().contains("Cannot iniciar diagnostico"));
+    }
+
+    @Test
+    void shouldThrowWhenEntregarWithoutFinalizadaStatus() {
+        UUID ordemId = UUID.randomUUID();
+        OrdemServicoEntity ordem = buildOrdemEntity(ordemId);
+        ordem.setStatus(StatusOrdemServico.EM_EXECUCAO);
+        when(ordemServicoRepository.findById(ordemId)).thenReturn(Optional.of(ordem));
+
+        IllegalStateException exception = assertThrows(
+                IllegalStateException.class,
+                () -> ordemServicoService.entregar(ordemId));
+
+        assertTrue(exception.getMessage().contains("Cannot entregar ordem"));
+    }
+
+    @Test
+    void shouldConsultarAcompanhamentoSuccessfully() {
+        UUID ordemId = UUID.randomUUID();
+        OrdemServicoEntity ordem = buildOrdemEntity(ordemId);
+        ClienteEntity cliente = buildCliente(UUID.randomUUID());
+        cliente.setCpfCnpj("52998224725");
+        ordem.setCliente(cliente);
+        when(ordemServicoRepository.findById(ordemId)).thenReturn(Optional.of(ordem));
+
+        var response = ordemServicoService.consultarAcompanhamento(ordemId, "529.982.247-25");
+
+        assertEquals(ordemId, response.ordemServicoId());
+        assertEquals("52998224725", response.clienteCpfCnpj());
+    }
+
+    @Test
+    void shouldThrowWhenConsultarAcompanhamentoCpfDoesNotMatch() {
+        UUID ordemId = UUID.randomUUID();
+        OrdemServicoEntity ordem = buildOrdemEntity(ordemId);
+        ClienteEntity cliente = buildCliente(UUID.randomUUID());
+        cliente.setCpfCnpj("52998224725");
+        ordem.setCliente(cliente);
+        when(ordemServicoRepository.findById(ordemId)).thenReturn(Optional.of(ordem));
+
+        EntityNotFoundException exception = assertThrows(
+                EntityNotFoundException.class,
+                () -> ordemServicoService.consultarAcompanhamento(ordemId, "11144477735"));
+
+        assertTrue(exception.getMessage().contains("not found for informed CPF/CNPJ"));
+    }
+
     private OrdemServicoRequestDTO buildRequest(
             UUID clienteId,
             UUID veiculoId,
@@ -316,6 +756,23 @@ class OrdemServicoServiceUsecaseImplTest {
                 status,
                 LocalDateTime.now(),
                 null,
+                List.of(servicoId),
+                List.of(insumoId),
+                List.of(pecaId));
+    }
+
+    private OrdemServicoCreateByClienteRequestDTO buildCreateByClienteRequest(
+            String cpfCnpj,
+            String placa,
+            UUID servicoId,
+            UUID insumoId,
+            UUID pecaId) {
+        return new OrdemServicoCreateByClienteRequestDTO(
+                cpfCnpj,
+                placa,
+                "Toyota",
+                "Corolla",
+                2022,
                 List.of(servicoId),
                 List.of(insumoId),
                 List.of(pecaId));
