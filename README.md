@@ -1,123 +1,151 @@
-# Fiap Pos Tech - Tech Challenge 1
+# FIAP Pos Tech - Tech Challenge 1
 
-API REST para gerenciamento de oficina mecânica, desenvolvida como primeiro desafio da FIAP Pós Tech Architecture.
+API backend para gerenciamento de oficina mecânica.
 
-## Tecnologias
+Este projeto contempla:
+- Ciclo de vida e acompanhamento de ordens de serviço
+- Gestão de clientes, veículos, serviços, peças e insumos
+- Autenticação JWT com autorização por perfil
+- Monitoramento de tempo médio de execução de serviços
+- Documentação OpenAPI/Swagger
+- Testes automatizados com verificação de cobertura via JaCoCo
 
-- Java 25 + Spring Boot 4
-- Spring Security 7 com autenticação JWT
-- Spring Data JPA + PostgreSQL
-- Springdoc OpenAPI 3 (Swagger UI)
+## 1) Stack Tecnológica
+
+- Java 25
+- Spring Boot 4
+- Spring Security (JWT)
+- Spring Data JPA
+- PostgreSQL 15
+- Springdoc OpenAPI (Swagger UI)
 - Docker + Docker Compose
-- Lombok
+- JUnit 5 + Mockito
+- JaCoCo
 
-## Pré-requisitos
+## 2) Início Rápido (avaliador primeira execução)
 
-- Java 25+
-- Maven 3.9+ (ou use o `mvnw` incluso)
-- PostgreSQL 15+ **ou** Docker
+Se for a primeira execução, use Docker (recomendado):
 
-## Rodando localmente
+1. Copie o arquivo de ambiente:
 
-### Com Docker (recomendado)
+```bash
+cp .env.example .env
+```
+
+2. Suba os serviços:
+
+```bash
+docker-compose up --build
+```
+
+3. Acesse:
+- Swagger UI: `http://localhost:8080/swagger-ui.html`
+- OpenAPI JSON: `http://localhost:8080/v3/api-docs`
+
+4. Faça login com usuário admin bootstrap:
+- Email: `admin@oficina.com`
+- Senha: `admin123`
+
+Esse usuário é criado automaticamente na inicialização pelo `AdminUserBootstrap` (caso não exista).
+
+## 3) Pré-requisitos
+
+Você pode seguir por um dos caminhos:
+
+- **Com Docker (recomendado):**
+  - Docker
+  - Docker Compose
+
+- **Sem Docker (local):**
+  - Java 25
+  - PostgreSQL 15
+  - Maven 3.9+ (ou `mvnw`)
+
+## 4) Execução da Aplicação
+
+### 4.1 Com Docker
 
 ```bash
 cp .env.example .env
 docker-compose up --build
 ```
 
-### Sem Docker
+Parar containers:
 
-1. Crie o banco de dados no PostgreSQL:
+```bash
+docker-compose down
+```
+
+Parar e remover volume do banco:
+
+```bash
+docker-compose down -v
+```
+
+### 4.2 Sem Docker (local)
+
+1. Crie o banco:
 
 ```sql
 CREATE DATABASE oficina_mec_db;
 ```
 
-2. Ajuste as variáveis de ambiente se necessário (padrão: `admin`/`admin`, porta `5432`):
+2. Configure o `application.properties` localmente (obrigatório para avaliador em primeira execução).
+
+Use o arquivo de exemplo como base:
 
 ```bash
-export POSTGRES_USER=admin
-export POSTGRES_PASSWORD=admin
-export POSTGRES_DB=oficina_mec_db
+cp src/main/resources/application.properties.example src/main/resources/application.properties
 ```
 
-3. Execute a aplicação:
+No Windows PowerShell:
+
+```powershell
+copy src\main\resources\application.properties.example src\main\resources\application.properties
+```
+
+Depois ajuste os valores locais no `src/main/resources/application.properties`.
+
+Exemplo mínimo de configuração local:
+
+```properties
+spring.datasource.url=jdbc:postgresql://localhost:5432/oficina_mec_db
+spring.datasource.username=admin
+spring.datasource.password=admin
+spring.jpa.hibernate.ddl-auto=update
+spring.sql.init.mode=always
+```
+
+Arquivo de referência utilizado:
+- `src/main/resources/application.properties.example`
+
+3. Configure variáveis de ambiente (exemplo bash), se necessário:
+
+```bash
+export POSTGRES_HOST=localhost
+export POSTGRES_PORT=5432
+export POSTGRES_DB=oficina_mec_db
+export POSTGRES_USER=admin
+export POSTGRES_PASSWORD=admin
+export SPRING_JPA_HIBERNATE_DDL_AUTO=update
+export SPRING_SQL_INIT_MODE=always
+```
+
+4. Inicie a aplicação:
 
 ```bash
 ./mvnw spring-boot:run
 ```
 
-## Acessando a API
+No Windows PowerShell:
 
-| Recurso | URL |
-|---|---|
-| Swagger UI | http://localhost:8080/swagger-ui.html |
-| OpenAPI JSON | http://localhost:8080/v3/api-docs |
-
-## Autenticação JWT
-
-A API utiliza autenticação stateless via JWT. O fluxo é:
-
-### 1. Criar usuário
-
-```http
-POST http://localhost:8080/api/auth/register
-Content-Type: application/json
-
-{
-  "name": "João Silva",
-  "email": "joao@oficina.com",
-  "password": "senha123",
-  "profile": "ADMIN"
-}
+```powershell
+.\mvnw.cmd spring-boot:run
 ```
 
-Perfis disponíveis: `ADMIN`, `ATENDENTE`, `MECANICO`
+## 5) Variáveis de Ambiente
 
-### 2. Fazer login
-
-```http
-POST http://localhost:8080/api/auth/login
-Content-Type: application/json
-
-{
-  "email": "joao@oficina.com",
-  "password": "senha123"
-}
-```
-
-A resposta retorna o `accessToken` (validade: 1h) e o `refreshToken` (validade: 7 dias).
-
-### 3. Usar o token
-
-Adicione o header em todas as requisições protegidas:
-
-```
-Authorization: Bearer <accessToken>
-```
-
-### 4. Renovar o token
-
-```http
-POST http://localhost:8080/api/auth/refresh
-Content-Type: application/json
-
-{
-  "refreshToken": "<refreshToken>"
-}
-```
-
-### Autenticando no Swagger UI
-
-1. Acesse http://localhost:8080/swagger-ui.html
-2. Faça login via `POST /api/auth/login` ou registre um usuário via `POST /api/auth/register`
-3. Copie o `accessToken` da resposta
-4. Clique no botão **Authorize** (cadeado) no topo da página
-5. Cole o token e clique em **Authorize**
-6. Todos os endpoints passam a ser executados autenticados
-
-## Variáveis de ambiente
+Os padrões estão no `.env.example`.
 
 | Variável | Padrão | Descrição |
 |---|---|---|
@@ -126,4 +154,153 @@ Content-Type: application/json
 | `POSTGRES_DB` | `oficina_mec_db` | Nome do banco |
 | `POSTGRES_USER` | `admin` | Usuário do banco |
 | `POSTGRES_PASSWORD` | `admin` | Senha do banco |
-| `SPRING_JPA_HIBERNATE_DDL_AUTO` | `update` | Estratégia DDL do Hibernate |
+| `SPRING_JPA_HIBERNATE_DDL_AUTO` | `update` | Estratégia de schema do Hibernate |
+| `SPRING_SQL_INIT_MODE` | `always` | Inicialização SQL (inclui `data.sql`) |
+
+## 6) Autenticação e Autorização
+
+### 6.1 Endpoints públicos de autenticação
+
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+- `POST /api/auth/refresh`
+
+### 6.2 Usuário admin padrão
+
+Na inicialização, se não existir:
+- email: `admin@oficina.com`
+- senha: `admin123`
+- perfil: `ADMIN`
+
+### 6.3 Perfis disponíveis
+
+- `ADMIN`
+- `ATENDENTE`
+- `MECANICO`
+
+### 6.4 Uso do token JWT
+
+Enviar no header:
+
+```text
+Authorization: Bearer <accessToken>
+```
+
+### 6.5 Autenticação no Swagger
+
+1. Execute o login no Swagger
+2. Copie o `accessToken`
+3. Clique em `Authorize`
+4. Cole o token e confirme
+
+## 7) Módulos da API (visão geral)
+
+- `Clientes`: CRUD
+- `Veiculos`: CRUD + validação de placa
+- `Servicos`: CRUD
+- `Pecas`: CRUD + estoque
+- `Insumos`: CRUD + estoque
+- `Ordens de Servico`:
+  - CRUD
+  - criação por CPF/CNPJ
+  - inclusão de peças
+  - transições de status (diagnóstico, orçamento, aprovação, execução, finalização, entrega)
+  - endpoint de acompanhamento para cliente
+- `Monitoramento`:
+  - tempo médio de execução por serviço
+
+## 8) Testes e Cobertura
+
+Executar todos os testes:
+
+```bash
+./mvnw test
+```
+
+No Windows PowerShell:
+
+```powershell
+.\mvnw.cmd test
+```
+
+Executar verificação completa (testes + JaCoCo + regra de cobertura):
+
+```bash
+./mvnw verify
+```
+
+Relatório JaCoCo:
+
+- `target/site/jacoco/index.html`
+
+Abrir no Windows:
+
+```powershell
+start target\site\jacoco\index.html
+```
+
+A verificação de cobertura está configurada no `pom.xml`.
+
+## 9) Comandos Úteis
+
+Build sem testes:
+
+```bash
+./mvnw clean package -DskipTests
+```
+
+Executar uma classe de teste específica:
+
+```bash
+./mvnw -Dtest=AuthServiceUsecaseTest test
+```
+
+## 10) Estrutura do Projeto (resumida)
+
+```text
+src/main/java/com/postech/challenge
+  application
+    dto
+    mapper
+    usecase
+    validator
+    gateway
+  infrastructure
+    config
+    persistence
+      entity
+      repository
+    security
+    notification
+  presentation
+    api
+    api/doc
+```
+
+## 11) Solução de Problemas
+
+### Porta em uso
+- Altere portas no `docker-compose.yml` ou finalize o processo que está ocupando a porta.
+
+### Falha de conexão com banco
+- Verifique os valores do `.env`
+- Confirme que PostgreSQL está ativo
+- Confirme `POSTGRES_HOST` e `POSTGRES_PORT`
+
+### Swagger não abre
+- Verifique se a aplicação está rodando na porta `8080`
+- Acesse `http://localhost:8080/swagger-ui.html`
+
+### Erros JWT (401/403)
+- Verifique validade do token
+- Verifique perfil/role com permissão no endpoint
+- Verifique header `Authorization: Bearer <token>`
+
+## 12) Roteiro sugerido para avaliação
+
+1. `cp .env.example .env`
+2. `docker-compose up --build`
+3. Acessar Swagger
+4. Fazer login com `admin@oficina.com` / `admin123`
+5. Validar endpoints principais
+6. Executar `./mvnw verify`

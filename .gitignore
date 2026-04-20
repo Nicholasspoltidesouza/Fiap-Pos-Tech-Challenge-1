@@ -12,6 +12,7 @@ target/
 ### Spring Boot local profile (copy from *.example) ###
 src/main/resources/application-local.yml
 src/main/resources/application-local.properties
+src/main/resources/application.properties
 
 ### Logs ###
 *.log
