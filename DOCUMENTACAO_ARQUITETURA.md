@@ -102,7 +102,34 @@ Responsabilidades:
 - configurar componentes tecnicos da aplicacao
 - implementar integracoes externas (ex.: notificacao)
 
-## 4) Regra de Dependencia
+## 4) Linguagem Ubiqua e Aplicacao
+
+A linguagem ubiqua define um vocabulario unico entre negocio e tecnologia, reduzindo ambiguidade entre requisitos, codigo e documentacao.
+
+Termos centrais adotados no projeto:
+
+- `OrdemServico`: unidade principal do processo da oficina
+- `StatusOrdemServico`: estado atual da ordem (`RECEBIDA`, `EM_DIAGNOSTICO`, `AGUARDANDO_APROVACAO`, `EM_EXECUCAO`, `FINALIZADA`, `ENTREGUE`)
+- `Orcamento`: valor proposto para execucao dos servicos
+- `AprovacaoOrcamento`: decisao do cliente (aprovar ou rejeitar)
+- `Cliente`, `Veiculo`, `Servico`, `Peca`, `Insumo`: entidades de negocio utilizadas no ciclo da ordem
+- `PerfilUsuario`: papel de acesso do usuario (`ADMIN`, `ATENDENTE`, `MECANICO`, `CLIENTE`)
+- `AcompanhamentoOrdemServico`: visao de progresso da ordem para consulta
+
+Aplicacao pratica da linguagem ubiqua:
+
+- no `domain`, os conceitos de negocio sao representados por tipos nomeados conforme o dominio (ex.: `StatusOrdemServico`, `PerfilUsuario`)
+- na `application`, os casos de uso e DTOs usam os mesmos termos do negocio para manter rastreabilidade entre requisito e implementacao
+- na `presentation`, endpoints e contratos refletem o mesmo vocabulario para evitar traducao inconsistente entre API e regra de negocio
+- na documentacao (arquitetura e API), os nomes mantem o mesmo significado tecnico-funcional usado no codigo
+
+Resultado esperado:
+
+- comunicacao mais clara entre equipe tecnica e avaliadores
+- menor risco de erro por interpretacao
+- maior facilidade de manutencao e evolucao das regras de negocio
+
+## 5) Regra de Dependencia
 
 Direcao recomendada de dependencia:
 
@@ -115,7 +142,7 @@ Principio aplicado:
 - detalhes tecnicos nao devem ditar regras de negocio
 - o nucleo de negocio deve permanecer independente de framework
 
-## 5) Persistencia e Domain
+## 6) Persistencia e Domain
 
 A camada de persistencia nao pertence ao `domain`.
 
@@ -127,7 +154,7 @@ Boa pratica:
 - contratos de repositorio/gateway podem ficar na camada de negocio/aplicacao
 - implementacoes concretas ficam em `infrastructure`
 
-## 6) Fluxo Tipico de Requisicao
+## 7) Fluxo Tipico de Requisicao
 
 1. Cliente chama endpoint REST
 2. Controller (`presentation`) recebe e delega
@@ -136,7 +163,7 @@ Boa pratica:
 5. Implementacao em `infrastructure` acessa banco/integracao
 6. Resultado retorna para `application`, depois `presentation`, e entao ao cliente
 
-## 7) Beneficios da Arquitetura
+## 8) Beneficios da Arquitetura
 
 - alta coesao por responsabilidade
 - menor acoplamento entre negocio e tecnologia
@@ -144,7 +171,7 @@ Boa pratica:
 - evolucao segura de banco, seguranca e integracoes
 - maior clareza para documentacao e defesa do projeto
 
-## 8) Estrutura Atual (resumida)
+## 9) Estrutura Atual (resumida)
 
 ```text
 src/main/java/com/postech/challenge
