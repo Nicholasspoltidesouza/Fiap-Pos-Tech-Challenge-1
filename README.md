@@ -10,6 +10,10 @@ Este projeto contempla:
 - Documentação OpenAPI/Swagger
 - Testes automatizados com verificação de cobertura via JaCoCo
 
+## Documentacao de Arquitetura
+
+- Consulte `DOCUMENTACAO_ARQUITETURA.md` para diagrama em camadas, responsabilidades e fluxo de dependencias do projeto.
+
 ## 1) Stack Tecnológica
 
 - Java 25
