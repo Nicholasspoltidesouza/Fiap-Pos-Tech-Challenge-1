@@ -2,6 +2,8 @@ package com.postech.challenge.infrastructure.persistence.entity;
 
 import java.util.UUID;
 
+import com.postech.challenge.domain.model.PerfilUsuario;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Enumerated;

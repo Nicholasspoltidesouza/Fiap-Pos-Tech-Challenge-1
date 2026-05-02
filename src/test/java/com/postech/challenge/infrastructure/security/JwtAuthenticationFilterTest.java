@@ -19,7 +19,7 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import com.postech.challenge.infrastructure.persistence.entity.PerfilUsuario;
+import com.postech.challenge.domain.model.PerfilUsuario;
 
 import jakarta.servlet.ServletException;
 

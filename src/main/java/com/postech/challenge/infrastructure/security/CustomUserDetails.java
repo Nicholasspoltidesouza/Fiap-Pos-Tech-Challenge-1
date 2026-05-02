@@ -1,6 +1,6 @@
 package com.postech.challenge.infrastructure.security;
 
-import com.postech.challenge.infrastructure.persistence.entity.PerfilUsuario;
+import com.postech.challenge.domain.model.PerfilUsuario;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;

@@ -1,4 +1,4 @@
-package com.postech.challenge.infrastructure.persistence.entity;
+package com.postech.challenge.domain.model;
 
 public enum StatusOrdemServico {
     RECEBIDA,

@@ -3,7 +3,7 @@ package com.postech.challenge.application.usecase;
 import com.postech.challenge.application.dto.AuthResponseDTO;
 import com.postech.challenge.application.dto.LoginRequestDTO;
 import com.postech.challenge.application.dto.RegisterRequestDTO;
-import com.postech.challenge.infrastructure.persistence.entity.PerfilUsuario;
+import com.postech.challenge.domain.model.PerfilUsuario;
 import com.postech.challenge.infrastructure.persistence.entity.UsuarioEntity;
 import com.postech.challenge.infrastructure.persistence.repository.UsuarioRepository;
 import com.postech.challenge.infrastructure.security.JwtTokenProvider;

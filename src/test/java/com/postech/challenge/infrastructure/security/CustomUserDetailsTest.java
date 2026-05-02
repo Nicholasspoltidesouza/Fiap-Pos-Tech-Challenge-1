@@ -7,7 +7,7 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 
-import com.postech.challenge.infrastructure.persistence.entity.PerfilUsuario;
+import com.postech.challenge.domain.model.PerfilUsuario;
 
 class CustomUserDetailsTest {
 

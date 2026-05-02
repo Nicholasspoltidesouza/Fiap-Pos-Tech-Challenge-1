@@ -21,7 +21,7 @@ import com.postech.challenge.infrastructure.persistence.entity.InsumoEntity;
 import com.postech.challenge.infrastructure.persistence.entity.OrdemServicoEntity;
 import com.postech.challenge.infrastructure.persistence.entity.PecaEntity;
 import com.postech.challenge.infrastructure.persistence.entity.ServicoEntity;
-import com.postech.challenge.infrastructure.persistence.entity.StatusOrdemServico;
+import com.postech.challenge.domain.model.StatusOrdemServico;
 import com.postech.challenge.infrastructure.persistence.entity.VeiculoEntity;
 import com.postech.challenge.infrastructure.persistence.repository.ClienteRepository;
 import com.postech.challenge.infrastructure.persistence.repository.InsumoRepository;

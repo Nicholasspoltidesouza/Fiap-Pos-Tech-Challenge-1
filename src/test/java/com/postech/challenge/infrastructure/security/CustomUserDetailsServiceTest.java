@@ -15,7 +15,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
-import com.postech.challenge.infrastructure.persistence.entity.PerfilUsuario;
+import com.postech.challenge.domain.model.PerfilUsuario;
 import com.postech.challenge.infrastructure.persistence.entity.UsuarioEntity;
 import com.postech.challenge.infrastructure.persistence.repository.UsuarioRepository;
 
