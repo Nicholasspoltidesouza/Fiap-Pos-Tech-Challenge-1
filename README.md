@@ -339,6 +339,46 @@ flowchart LR
     end
 ```
 
+### Pré-requisitos de infraestrutura (instalação das ferramentas)
+
+Para rodar a stack local você precisa de **Docker**, **Terraform**, **kind** e **kubectl**.
+
+#### Windows (winget)
+
+```powershell
+winget install --id Hashicorp.Terraform -e
+winget install --id Kubernetes.kubectl -e
+winget install --id Kubernetes.kind -e
+```
+
+> Após instalar, **abra um novo terminal** para o `PATH` ser atualizado. Valide com `terraform -version`, `kubectl version --client` e `kind version`.
+
+#### macOS (Homebrew)
+
+```bash
+brew tap hashicorp/tap
+brew install hashicorp/tap/terraform
+brew install kubectl
+brew install kind
+```
+
+#### Linux (Ubuntu/Debian)
+
+```bash
+# Terraform
+wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+sudo apt update && sudo apt install terraform
+
+# kubectl
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+
+# kind
+curl -Lo ./kind https://kind.sigs.k8s.io/dl/latest/kind-linux-amd64
+chmod +x ./kind && sudo mv ./kind /usr/local/bin/kind
+```
+
 ### Terraform (provisiona cluster + banco)
 
 ```bash
