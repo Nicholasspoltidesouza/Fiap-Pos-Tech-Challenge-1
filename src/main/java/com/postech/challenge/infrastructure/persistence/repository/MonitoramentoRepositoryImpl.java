@@ -5,7 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public class MonitoramentoRepositoryImpl extends MonitoramentoRepository {
+public class MonitoramentoRepositoryImpl implements MonitoramentoRepository {
 
     private final MonitoramentoJpaRepository monitoramentoJpaRepository;
 

@@ -12,6 +12,8 @@ public abstract class OrdemServicoServiceUsecase {
 
     public abstract List<OrdemServicoResponseDTO> findAll();
 
+    public abstract List<OrdemServicoResponseDTO> listarAtivas();
+
     public abstract OrdemServicoResponseDTO findById(UUID id);
 
     public abstract OrdemServicoResponseDTO create(OrdemServicoRequestDTO request);

@@ -6,14 +6,15 @@ import java.util.UUID;
 
 import com.postech.challenge.infrastructure.persistence.entity.InsumoEntity;
 
-public abstract class InsumoRepository {
-    public abstract List<InsumoEntity> findAll();
+public interface InsumoRepository {
 
-    public abstract Optional<InsumoEntity> findById(UUID id);
+    List<InsumoEntity> findAll();
 
-    public abstract InsumoEntity save(InsumoEntity insumo);
+    Optional<InsumoEntity> findById(UUID id);
 
-    public abstract boolean existsById(UUID id);
+    InsumoEntity save(InsumoEntity insumo);
 
-    public abstract void deleteById(UUID id);
+    boolean existsById(UUID id);
+
+    void deleteById(UUID id);
 }

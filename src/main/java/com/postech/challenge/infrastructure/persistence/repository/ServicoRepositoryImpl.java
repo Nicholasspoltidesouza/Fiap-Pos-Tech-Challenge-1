@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository;
 import com.postech.challenge.infrastructure.persistence.entity.ServicoEntity;
 
 @Repository
-public class ServicoRepositoryImpl extends ServicoRepository {
+public class ServicoRepositoryImpl implements ServicoRepository {
 
     private final ServicoJpaRepository servicoJpaRepository;
 

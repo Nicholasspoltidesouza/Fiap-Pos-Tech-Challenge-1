@@ -4,13 +4,16 @@ import java.util.List;
 import java.util.UUID;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotBlank;
 
 @Schema(description = "Dados para criação de ordem de serviço por CPF/CNPJ do cliente")
 public record OrdemServicoCreateByClienteRequestDTO(
 
+        @NotBlank(message = "clienteCpfCnpj is required")
         @Schema(description = "CPF ou CNPJ do cliente", example = "12345678909")
         String clienteCpfCnpj,
 
+        @NotBlank(message = "veiculoPlaca is required")
         @Schema(description = "Placa do veículo", example = "ABC1D23")
         String veiculoPlaca,
 

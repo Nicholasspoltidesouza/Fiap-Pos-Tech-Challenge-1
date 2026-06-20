@@ -6,18 +6,19 @@ import java.util.UUID;
 
 import com.postech.challenge.infrastructure.persistence.entity.ClienteEntity;
 
-public abstract class ClienteRepository {
-    public abstract List<ClienteEntity> findAll();
+public interface ClienteRepository {
 
-    public abstract Optional<ClienteEntity> findById(UUID id);
+    List<ClienteEntity> findAll();
 
-    public abstract Optional<ClienteEntity> findByCpfCnpj(String cpfCnpj);
+    Optional<ClienteEntity> findById(UUID id);
 
-    public abstract ClienteEntity save(ClienteEntity cliente);
+    Optional<ClienteEntity> findByCpfCnpj(String cpfCnpj);
 
-    public abstract boolean existsById(UUID id);
+    ClienteEntity save(ClienteEntity cliente);
 
-    public abstract boolean existsByCpfCnpj(String cpfCnpj);
+    boolean existsById(UUID id);
 
-    public abstract void deleteById(UUID id);
+    boolean existsByCpfCnpj(String cpfCnpj);
+
+    void deleteById(UUID id);
 }

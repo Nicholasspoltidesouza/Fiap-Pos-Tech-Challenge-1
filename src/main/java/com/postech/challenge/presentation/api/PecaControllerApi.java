@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -46,13 +47,13 @@ public class PecaControllerApi extends PecaControllerApiDoc {
 
     @PostMapping
     @Override
-    public ResponseEntity<PecaResponseDTO> create(@RequestBody PecaRequestDTO request) {
+    public ResponseEntity<PecaResponseDTO> create(@Valid @RequestBody PecaRequestDTO request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(pecaService.create(request));
     }
 
     @PutMapping("/{id}")
     @Override
-    public ResponseEntity<PecaResponseDTO> update(@PathVariable UUID id, @RequestBody PecaRequestDTO request) {
+    public ResponseEntity<PecaResponseDTO> update(@PathVariable UUID id, @Valid @RequestBody PecaRequestDTO request) {
         return ResponseEntity.ok(pecaService.update(id, request));
     }
 

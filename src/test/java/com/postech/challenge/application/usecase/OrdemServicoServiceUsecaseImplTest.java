@@ -1,6 +1,7 @@
 package com.postech.challenge.application.usecase;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -24,8 +25,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.postech.challenge.application.dto.OrdemServicoCreateByClienteRequestDTO;
 import com.postech.challenge.application.dto.OrdemServicoRequestDTO;
 import com.postech.challenge.application.dto.OrdemServicoResponseDTO;
-import com.postech.challenge.application.gateway.OrcamentoNotificacaoGateway;
+import com.postech.challenge.application.gateway.NotificacaoOrdemServicoGateway;
 import com.postech.challenge.application.mapper.OrdemServicoDataMapper;
+import com.postech.challenge.domain.exception.DomainException;
 import com.postech.challenge.infrastructure.persistence.entity.ClienteEntity;
 import com.postech.challenge.infrastructure.persistence.entity.InsumoEntity;
 import com.postech.challenge.infrastructure.persistence.entity.OrdemServicoEntity;
@@ -60,7 +62,7 @@ class OrdemServicoServiceUsecaseImplTest {
     @Mock
     private OrdemServicoDataMapper ordemServicoDataMapper;
     @Mock
-    private OrcamentoNotificacaoGateway orcamentoNotificacaoGateway;
+    private NotificacaoOrdemServicoGateway notificacaoGateway;
 
     @InjectMocks
     private OrdemServicoServiceUsecaseImpl ordemServicoService;
@@ -78,6 +80,21 @@ class OrdemServicoServiceUsecaseImplTest {
         assertEquals(1, result.size());
         assertEquals(response, result.getFirst());
         verify(ordemServicoRepository).findAll();
+    }
+
+    @Test
+    void shouldListarAtivas() {
+        OrdemServicoEntity entity = buildOrdemEntity(UUID.randomUUID());
+        OrdemServicoResponseDTO response = buildResponse(entity.getId());
+
+        when(ordemServicoRepository.findAtivasOrdenadas()).thenReturn(List.of(entity));
+        when(ordemServicoDataMapper.toResponse(entity)).thenReturn(response);
+
+        List<OrdemServicoResponseDTO> result = ordemServicoService.listarAtivas();
+
+        assertEquals(1, result.size());
+        assertEquals(response, result.getFirst());
+        verify(ordemServicoRepository).findAtivasOrdenadas();
     }
 
     @Test
@@ -382,7 +399,7 @@ class OrdemServicoServiceUsecaseImplTest {
         assertEquals(response, result);
         assertEquals(StatusOrdemServico.AGUARDANDO_APROVACAO, ordem.getStatus());
         verify(ordemServicoRepository).save(ordem);
-        verify(orcamentoNotificacaoGateway).enviarOrcamento(ordem);
+        verify(notificacaoGateway).notificarAtualizacaoStatus(ordem);
     }
 
     @Test
@@ -685,14 +702,67 @@ class OrdemServicoServiceUsecaseImplTest {
     }
 
     @Test
+    void shouldIniciarDiagnosticoWhenStatusIsRecebida() {
+        UUID ordemId = UUID.randomUUID();
+        OrdemServicoEntity ordem = buildOrdemEntity(ordemId);
+        ordem.setStatus(StatusOrdemServico.RECEBIDA);
+        OrdemServicoResponseDTO response = buildResponse(ordemId);
+
+        when(ordemServicoRepository.findById(ordemId)).thenReturn(Optional.of(ordem));
+        when(ordemServicoRepository.save(ordem)).thenReturn(ordem);
+        when(ordemServicoDataMapper.toResponse(ordem)).thenReturn(response);
+
+        OrdemServicoResponseDTO result = ordemServicoService.iniciarDiagnostico(ordemId);
+
+        assertEquals(response, result);
+        assertEquals(StatusOrdemServico.EM_DIAGNOSTICO, ordem.getStatus());
+        verify(notificacaoGateway).notificarAtualizacaoStatus(ordem);
+    }
+
+    @Test
+    void shouldFinalizarWhenStatusIsEmExecucao() {
+        UUID ordemId = UUID.randomUUID();
+        OrdemServicoEntity ordem = buildOrdemEntity(ordemId);
+        ordem.setStatus(StatusOrdemServico.EM_EXECUCAO);
+        OrdemServicoResponseDTO response = buildResponse(ordemId);
+
+        when(ordemServicoRepository.findById(ordemId)).thenReturn(Optional.of(ordem));
+        when(ordemServicoRepository.save(ordem)).thenReturn(ordem);
+        when(ordemServicoDataMapper.toResponse(ordem)).thenReturn(response);
+
+        OrdemServicoResponseDTO result = ordemServicoService.finalizar(ordemId);
+
+        assertEquals(response, result);
+        assertEquals(StatusOrdemServico.FINALIZADA, ordem.getStatus());
+        assertNotNull(ordem.getDataFinalizacao());
+    }
+
+    @Test
+    void shouldEntregarWhenStatusIsFinalizada() {
+        UUID ordemId = UUID.randomUUID();
+        OrdemServicoEntity ordem = buildOrdemEntity(ordemId);
+        ordem.setStatus(StatusOrdemServico.FINALIZADA);
+        OrdemServicoResponseDTO response = buildResponse(ordemId);
+
+        when(ordemServicoRepository.findById(ordemId)).thenReturn(Optional.of(ordem));
+        when(ordemServicoRepository.save(ordem)).thenReturn(ordem);
+        when(ordemServicoDataMapper.toResponse(ordem)).thenReturn(response);
+
+        OrdemServicoResponseDTO result = ordemServicoService.entregar(ordemId);
+
+        assertEquals(response, result);
+        assertEquals(StatusOrdemServico.ENTREGUE, ordem.getStatus());
+    }
+
+    @Test
     void shouldThrowWhenIniciarDiagnosticoWithInvalidStatus() {
         UUID ordemId = UUID.randomUUID();
         OrdemServicoEntity ordem = buildOrdemEntity(ordemId);
         ordem.setStatus(StatusOrdemServico.EM_EXECUCAO);
         when(ordemServicoRepository.findById(ordemId)).thenReturn(Optional.of(ordem));
 
-        IllegalStateException exception = assertThrows(
-                IllegalStateException.class,
+        DomainException exception = assertThrows(
+                DomainException.class,
                 () -> ordemServicoService.iniciarDiagnostico(ordemId));
 
         assertTrue(exception.getMessage().contains("Cannot iniciar diagnostico"));
@@ -705,8 +775,8 @@ class OrdemServicoServiceUsecaseImplTest {
         ordem.setStatus(StatusOrdemServico.EM_EXECUCAO);
         when(ordemServicoRepository.findById(ordemId)).thenReturn(Optional.of(ordem));
 
-        IllegalStateException exception = assertThrows(
-                IllegalStateException.class,
+        DomainException exception = assertThrows(
+                DomainException.class,
                 () -> ordemServicoService.entregar(ordemId));
 
         assertTrue(exception.getMessage().contains("Cannot entregar ordem"));

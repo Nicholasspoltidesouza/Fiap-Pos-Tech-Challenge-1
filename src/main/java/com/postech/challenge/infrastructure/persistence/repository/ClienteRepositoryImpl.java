@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository;
 import com.postech.challenge.infrastructure.persistence.entity.ClienteEntity;
 
 @Repository
-public class ClienteRepositoryImpl extends ClienteRepository {
+public class ClienteRepositoryImpl implements ClienteRepository {
 
     private final ClienteJpaRepository clienteJpaRepository;
 

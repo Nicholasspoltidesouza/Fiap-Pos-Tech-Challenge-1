@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository;
 import com.postech.challenge.infrastructure.persistence.entity.VeiculoEntity;
 
 @Repository
-public class VeiculoRepositoryImpl extends VeiculoRepository {
+public class VeiculoRepositoryImpl implements VeiculoRepository {
 
     private final VeiculoJpaRepository veiculoJpaRepository;
 

@@ -23,7 +23,9 @@ import com.postech.challenge.application.dto.OrdemServicoResponseDTO;
 import com.postech.challenge.application.usecase.OrdemServicoServiceUsecase;
 import com.postech.challenge.presentation.api.doc.OrdemServicoControllerApiDoc;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/ordens-servico")
@@ -42,6 +44,16 @@ public class OrdemServicoControllerApi extends OrdemServicoControllerApiDoc {
         return ResponseEntity.ok(ordemServicoService.findAll());
     }
 
+    @GetMapping("/ativas")
+    @Operation(
+            summary = "Listar ordens de servico ativas",
+            description = "Lista as ordens de servico nao encerradas, ordenadas por status "
+                    + "(Em Execucao > Aguardando Aprovacao > Em Diagnostico > Recebida) e mais antigas primeiro. "
+                    + "Exclui logicamente as ordens Finalizadas e Entregues.")
+    public ResponseEntity<List<OrdemServicoResponseDTO>> listarAtivas() {
+        return ResponseEntity.ok(ordemServicoService.listarAtivas());
+    }
+
     @GetMapping("/{id}")
     @Override
     public ResponseEntity<OrdemServicoResponseDTO> findById(@PathVariable UUID id) {
@@ -50,13 +62,13 @@ public class OrdemServicoControllerApi extends OrdemServicoControllerApiDoc {
 
     @PostMapping
     @Override
-    public ResponseEntity<OrdemServicoResponseDTO> create(@RequestBody OrdemServicoRequestDTO request) {
+    public ResponseEntity<OrdemServicoResponseDTO> create(@Valid @RequestBody OrdemServicoRequestDTO request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(ordemServicoService.create(request));
     }
 
     @PostMapping("/cliente")
     public ResponseEntity<OrdemServicoResponseDTO> createByClienteCpfCnpj(
-            @RequestBody OrdemServicoCreateByClienteRequestDTO request) {
+            @Valid @RequestBody OrdemServicoCreateByClienteRequestDTO request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(ordemServicoService.createByClienteCpfCnpj(request));
     }
 
@@ -64,14 +76,14 @@ public class OrdemServicoControllerApi extends OrdemServicoControllerApiDoc {
     @Override
     public ResponseEntity<OrdemServicoResponseDTO> update(
             @PathVariable UUID id,
-            @RequestBody OrdemServicoRequestDTO request) {
+            @Valid @RequestBody OrdemServicoRequestDTO request) {
         return ResponseEntity.ok(ordemServicoService.update(id, request));
     }
 
     @PatchMapping("/{id}/pecas")
     public ResponseEntity<OrdemServicoResponseDTO> adicionarPecas(
             @PathVariable UUID id,
-            @RequestBody AtualizarPecasOrdemServicoRequestDTO request) {
+            @Valid @RequestBody AtualizarPecasOrdemServicoRequestDTO request) {
         return ResponseEntity.ok(ordemServicoService.adicionarPecas(id, request.pecasIds()));
     }
 

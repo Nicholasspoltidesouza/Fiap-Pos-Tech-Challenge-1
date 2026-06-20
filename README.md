@@ -1,18 +1,28 @@
-# FIAP Pos Tech - Tech Challenge 1
+# FIAP Pos Tech - Tech Challenge (Fase 2)
 
-API backend para gerenciamento de oficina mecânica.
+API backend para gerenciamento de oficina mecânica, evoluída na Fase 2 com **Clean Architecture +
+domínio rico (DDD)**, validação de entrada, notificação por e-mail e infraestrutura local
+(Kubernetes via kind, Terraform e CI/CD).
 
 Este projeto contempla:
+- Domínio rico: agregado `OrdemServico` com máquina de estados (a regra de transição mora no agregado)
 - Ciclo de vida e acompanhamento de ordens de serviço
+- Listagem de OS ativas ordenada por status (com exclusão lógica de finalizadas/entregues)
 - Gestão de clientes, veículos, serviços, peças e insumos
-- Autenticação JWT com autorização por perfil
+- Autenticação JWT com autorização por perfil (segredo externalizado por variável de ambiente)
+- Validação de DTOs com Hibernate Validator (Jakarta Bean Validation)
+- Notificação de mudança de status por e-mail (MailHog no ambiente local)
 - Monitoramento de tempo médio de execução de serviços
 - Documentação OpenAPI/Swagger
-- Testes automatizados com verificação de cobertura via JaCoCo
+- Testes automatizados (unitários + integração com Testcontainers) e cobertura via JaCoCo
+- Manifestos Kubernetes (`/k8s`), IaC com Terraform (`/infra`) e pipeline CI/CD (`.github/workflows`)
 
-## Documentacao de Arquitetura
+## Documentação de Arquitetura e Modelagem
 
-- Consulte `DOCUMENTACAO_ARQUITETURA.md` para diagrama em camadas, responsabilidades e fluxo de dependencias do projeto.
+- `DOCUMENTACAO_ARQUITETURA.md`: diagrama em camadas, responsabilidades e fluxo de dependências.
+- `docs/DOMAIN_STORYTELLING.md`: Domain Storytelling (atores, narrativa e diagrama).
+- `docs/EVENT_STORMING.md`: Event Storming evoluído (brainstorm, linha do tempo, eventos pivotais,
+  comandos, políticas, agregados e contextos delimitados).
 
 ## 1) Stack Tecnológica
 
@@ -20,11 +30,16 @@ Este projeto contempla:
 - Spring Boot 4
 - Spring Security (JWT)
 - Spring Data JPA
+- Spring Validation (Hibernate Validator)
+- Spring Mail (MailHog/Mailpit local)
+- Spring Boot Actuator (health probes)
 - PostgreSQL 15
 - Springdoc OpenAPI (Swagger UI)
 - Docker + Docker Compose
-- JUnit 5 + Mockito
+- JUnit 5 + Mockito + Testcontainers
 - JaCoCo
+- Kubernetes (kind) + Terraform
+- GitHub Actions (CI/CD)
 
 ## 2) Início Rápido (avaliador primeira execução)
 
@@ -159,7 +174,22 @@ Os padrões estão no `.env.example`.
 | `POSTGRES_USER` | `admin` | Usuário do banco |
 | `POSTGRES_PASSWORD` | `admin` | Senha do banco |
 | `SPRING_JPA_HIBERNATE_DDL_AUTO` | `update` | Estratégia de schema do Hibernate |
-| `SPRING_SQL_INIT_MODE` | `always` | Inicialização SQL (inclui `data.sql`) |
+| `SPRING_SQL_INIT_MODE` | `always` | Inicialização SQL |
+| `JWT_SECRET` | (dev) | Segredo de assinatura JWT (externalizado; **defina um valor forte em produção**) |
+| `JWT_ACCESS_EXPIRATION_MS` | `3600000` | Validade do access token (ms) |
+| `JWT_REFRESH_EXPIRATION_MS` | `604800000` | Validade do refresh token (ms) |
+| `MAIL_HOST` | `localhost`/`mailhog` | Host SMTP (MailHog no Docker/k8s) |
+| `MAIL_PORT` | `1025` | Porta SMTP do MailHog |
+| `NOTIFICACAO_EMAIL_REMETENTE` | `oficina@oficina.com` | Remetente das notificações |
+| `NOTIFICACAO_EMAIL_DESTINATARIO` | `notificacoes@oficina.com` | Destinatário das notificações de status |
+
+> **Segurança / Sonar:** o `jwt.secret` deixou de ser fixo no código e passa a ser lido de `JWT_SECRET`
+> (variável de ambiente / Secret do Kubernetes), eliminando o segredo hardcoded apontado pelo Sonar.
+
+### E-mail local (MailHog)
+
+Ao subir via Docker Compose, a interface web do MailHog fica disponível em
+`http://localhost:8025`. Toda mudança de status relevante da OS gera um e-mail visível ali.
 
 ## 6) Autenticação e Autorização
 
@@ -263,23 +293,82 @@ Executar uma classe de teste específica:
 
 ```text
 src/main/java/com/postech/challenge
+  domain                 # núcleo de negócio puro (sem dependência de framework)
+    model                # agregado OrdemServico + StatusOrdemServico
+    model/vo             # value objects: CpfCnpj, Placa
+    exception            # DomainException, TransicaoStatusInvalidaException
   application
     dto
     mapper
     usecase
     validator
-    gateway
+    gateway              # ports (ex.: NotificacaoOrdemServicoGateway)
   infrastructure
     config
     persistence
       entity
-      repository
+      repository         # ports (interfaces) + implementações JPA
     security
-    notification
+    notification         # EmailNotificacaoGatewayImpl (JavaMailSender)
   presentation
     api
     api/doc
+
+docs/                    # Domain Storytelling e Event Storming
+k8s/                     # manifestos Kubernetes (namespace, configmap, secret, db, mailhog, app, hpa)
+infra/                   # Terraform (kind + kubernetes + database + metrics-server)
+.github/workflows/       # pipeline CI/CD
 ```
+
+## 10.1) Kubernetes (kind), Terraform e CI/CD
+
+### Arquitetura de deploy
+
+```mermaid
+flowchart LR
+    Dev[Desenvolvedor] -->|push| GH[GitHub Actions]
+    GH -->|mvn verify| Tests[Testes + JaCoCo]
+    GH -->|docker build| Img[(Imagem oficina-api)]
+    GH -->|kind load + kubectl apply| Cluster
+    subgraph Cluster [Cluster Kubernetes - kind]
+        App[Deployment oficina-api + HPA]
+        DB[(PostgreSQL)]
+        MH[MailHog]
+        App --> DB
+        App --> MH
+    end
+```
+
+### Terraform (provisiona cluster + banco)
+
+```bash
+cd infra
+terraform init
+terraform apply -auto-approve
+```
+
+Detalhes dos recursos e passos completos em `infra/README.md`.
+
+### Kubernetes (deploy da aplicação)
+
+```bash
+docker build -t oficina-api:latest .
+kind load docker-image oficina-api:latest --name oficina-cluster
+kubectl apply -f k8s/
+kubectl -n oficina get pods
+# aplicação exposta via NodePort em http://localhost:30080
+```
+
+Os manifestos incluem `ConfigMap`, `Secret`, probes de liveness/readiness, `resources`
+requests/limits e um `HorizontalPodAutoscaler` (requer metrics-server, instalado pelo Terraform).
+
+### CI/CD (GitHub Actions)
+
+O workflow `.github/workflows/ci-cd.yml` executa, a cada push/PR para `main`:
+
+1. **Build & Test** — `./mvnw verify` (inclui testes de integração com Testcontainers) e publica o relatório JaCoCo.
+2. **Docker image** — build da imagem da aplicação.
+3. **Deploy to kind** — cria um cluster kind efêmero, carrega a imagem, aplica os manifestos de `k8s/` e valida o rollout.
 
 ## 11) Solução de Problemas
 

@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -46,13 +47,13 @@ public class ServicoControllerApi extends ServicoControllerApiDoc {
 
     @PostMapping
     @Override
-    public ResponseEntity<ServicoResponseDTO> create(@RequestBody ServicoRequestDTO request) {
+    public ResponseEntity<ServicoResponseDTO> create(@Valid @RequestBody ServicoRequestDTO request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(servicoService.create(request));
     }
 
     @PutMapping("/{id}")
     @Override
-    public ResponseEntity<ServicoResponseDTO> update(@PathVariable UUID id, @RequestBody ServicoRequestDTO request) {
+    public ResponseEntity<ServicoResponseDTO> update(@PathVariable UUID id, @Valid @RequestBody ServicoRequestDTO request) {
         return ResponseEntity.ok(servicoService.update(id, request));
     }
 

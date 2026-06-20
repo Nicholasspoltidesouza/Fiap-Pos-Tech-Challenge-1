@@ -5,13 +5,16 @@ import java.util.List;
 import java.util.UUID;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
 
 @Schema(description = "Dados para criação ou atualização de ordem de serviço")
 public record OrdemServicoRequestDTO(
 
+        @NotNull(message = "clienteId is required")
         @Schema(description = "ID do cliente", example = "11111111-1111-1111-1111-111111111111")
         UUID clienteId,
 
+        @NotNull(message = "veiculoId is required")
         @Schema(description = "ID do veículo", example = "22222222-2222-2222-2222-222222222221")
         UUID veiculoId,
 

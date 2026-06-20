@@ -6,14 +6,17 @@ import java.util.UUID;
 
 import com.postech.challenge.infrastructure.persistence.entity.OrdemServicoEntity;
 
-public abstract class OrdemServicoRepository {
-    public abstract List<OrdemServicoEntity> findAll();
+public interface OrdemServicoRepository {
 
-    public abstract Optional<OrdemServicoEntity> findById(UUID id);
+    List<OrdemServicoEntity> findAll();
 
-    public abstract OrdemServicoEntity save(OrdemServicoEntity ordemServico);
+    List<OrdemServicoEntity> findAtivasOrdenadas();
 
-    public abstract boolean existsById(UUID id);
+    Optional<OrdemServicoEntity> findById(UUID id);
 
-    public abstract void deleteById(UUID id);
+    OrdemServicoEntity save(OrdemServicoEntity ordemServico);
+
+    boolean existsById(UUID id);
+
+    void deleteById(UUID id);
 }

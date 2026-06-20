@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -46,13 +47,13 @@ public class InsumoControllerApi extends InsumoControllerApiDoc {
 
     @PostMapping
     @Override
-    public ResponseEntity<InsumoResponseDTO> create(@RequestBody InsumoRequestDTO request) {
+    public ResponseEntity<InsumoResponseDTO> create(@Valid @RequestBody InsumoRequestDTO request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(insumoService.create(request));
     }
 
     @PutMapping("/{id}")
     @Override
-    public ResponseEntity<InsumoResponseDTO> update(@PathVariable UUID id, @RequestBody InsumoRequestDTO request) {
+    public ResponseEntity<InsumoResponseDTO> update(@PathVariable UUID id, @Valid @RequestBody InsumoRequestDTO request) {
         return ResponseEntity.ok(insumoService.update(id, request));
     }
 

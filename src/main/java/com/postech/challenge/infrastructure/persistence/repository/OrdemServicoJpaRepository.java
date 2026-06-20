@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 import com.postech.challenge.infrastructure.persistence.entity.OrdemServicoEntity;
 
@@ -18,4 +19,14 @@ public interface OrdemServicoJpaRepository extends JpaRepository<OrdemServicoEnt
     @Override
     @EntityGraph(attributePaths = {"cliente", "veiculo", "servicosSolicitados", "insumosSolicitados", "pecasSolicitadas"})
     Optional<OrdemServicoEntity> findById(UUID id);
+
+    @EntityGraph(attributePaths = {"cliente", "veiculo", "servicosSolicitados", "insumosSolicitados", "pecasSolicitadas"})
+    @Query("""
+            select o from OrdemServicoEntity o
+            where o.status not in (
+                com.postech.challenge.domain.model.StatusOrdemServico.FINALIZADA,
+                com.postech.challenge.domain.model.StatusOrdemServico.ENTREGUE
+            )
+            """)
+    List<OrdemServicoEntity> findAtivas();
 }

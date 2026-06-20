@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository;
 import com.postech.challenge.infrastructure.persistence.entity.PecaEntity;
 
 @Repository
-public class PecaRepositoryImpl extends PecaRepository {
+public class PecaRepositoryImpl implements PecaRepository {
 
     private final PecaJpaRepository pecaJpaRepository;
 

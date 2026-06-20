@@ -6,14 +6,15 @@ import java.util.UUID;
 
 import com.postech.challenge.infrastructure.persistence.entity.ServicoEntity;
 
-public abstract class ServicoRepository {
-    public abstract List<ServicoEntity> findAll();
+public interface ServicoRepository {
 
-    public abstract Optional<ServicoEntity> findById(UUID id);
+    List<ServicoEntity> findAll();
 
-    public abstract ServicoEntity save(ServicoEntity servico);
+    Optional<ServicoEntity> findById(UUID id);
 
-    public abstract boolean existsById(UUID id);
+    ServicoEntity save(ServicoEntity servico);
 
-    public abstract void deleteById(UUID id);
+    boolean existsById(UUID id);
+
+    void deleteById(UUID id);
 }

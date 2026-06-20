@@ -73,17 +73,27 @@ Responsabilidades:
 
 Pacotes principais:
 
-- `domain.model`
+- `domain.model` (agregado e enums)
+- `domain.model.vo` (value objects)
+- `domain.exception`
 
 Responsabilidades:
 
-- representar conceitos de negocio puros
-- manter tipos centrais usados por regras de negocio
+- representar conceitos de negocio puros (sem dependencia de framework/JPA)
+- concentrar as regras de transicao de estado no proprio agregado
+- validar invariantes via value objects
 
 Exemplos atuais:
 
-- `StatusOrdemServico`
-- `PerfilUsuario`
+- `OrdemServico` (agregado raiz com maquina de estados: `iniciarDiagnostico`, `enviarOrcamento`,
+  `aprovarOrcamento`, `finalizar`, `entregar`, `calcularOrcamento`)
+- `StatusOrdemServico` (com prioridade de listagem e flag de encerrada)
+- `CpfCnpj`, `Placa` (value objects com validacao encapsulada)
+- `DomainException`, `TransicaoStatusInvalidaException`
+
+> **Domínio rico:** a lógica de transição de estado da OS, antes espalhada no caso de uso, agora
+> reside no agregado `OrdemServico`. O caso de uso apenas orquestra (carrega a entidade JPA, monta
+> o agregado de domínio, aplica a transição e persiste o resultado).
 
 ### 3.4 Infrastructure
 
@@ -175,14 +185,16 @@ Boa pratica:
 
 ```text
 src/main/java/com/postech/challenge
+  domain
+    model
+    model/vo
+    exception
   application
     dto
     mapper
     usecase
     validator
     gateway
-  domain
-    model
   infrastructure
     config
     persistence
@@ -195,3 +207,13 @@ src/main/java/com/postech/challenge
     api/doc
     exceptionHandler
 ```
+
+## 10) Infraestrutura (Fase 2)
+
+- `k8s/`: manifestos Kubernetes (Namespace, ConfigMap, Secret, PostgreSQL, MailHog, Deployment da
+  aplicacao com probes e resources, e HorizontalPodAutoscaler).
+- `infra/`: Terraform que provisiona o cluster local (kind), o metrics-server (para o HPA) e o banco
+  de dados.
+- `.github/workflows/ci-cd.yml`: pipeline de build, testes (Testcontainers), build de imagem Docker e
+  deploy em cluster kind.
+- Modelagem: `docs/DOMAIN_STORYTELLING.md` e `docs/EVENT_STORMING.md`.

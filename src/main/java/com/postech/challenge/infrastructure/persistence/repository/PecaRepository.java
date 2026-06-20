@@ -6,14 +6,15 @@ import java.util.UUID;
 
 import com.postech.challenge.infrastructure.persistence.entity.PecaEntity;
 
-public abstract class PecaRepository {
-    public abstract List<PecaEntity> findAll();
+public interface PecaRepository {
 
-    public abstract Optional<PecaEntity> findById(UUID id);
+    List<PecaEntity> findAll();
 
-    public abstract PecaEntity save(PecaEntity peca);
+    Optional<PecaEntity> findById(UUID id);
 
-    public abstract boolean existsById(UUID id);
+    PecaEntity save(PecaEntity peca);
 
-    public abstract void deleteById(UUID id);
+    boolean existsById(UUID id);
+
+    void deleteById(UUID id);
 }

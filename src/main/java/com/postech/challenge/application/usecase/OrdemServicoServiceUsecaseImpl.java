@@ -5,7 +5,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.regex.Pattern;
 
 import org.springframework.stereotype.Service;
 
@@ -13,15 +12,17 @@ import com.postech.challenge.application.dto.AcompanhamentoOrdemServicoResponseD
 import com.postech.challenge.application.dto.OrdemServicoCreateByClienteRequestDTO;
 import com.postech.challenge.application.dto.OrdemServicoRequestDTO;
 import com.postech.challenge.application.dto.OrdemServicoResponseDTO;
-import com.postech.challenge.application.gateway.OrcamentoNotificacaoGateway;
+import com.postech.challenge.application.gateway.NotificacaoOrdemServicoGateway;
 import com.postech.challenge.application.mapper.OrdemServicoDataMapper;
-import com.postech.challenge.application.validator.CpfCnpjValidator;
+import com.postech.challenge.domain.model.OrdemServico;
+import com.postech.challenge.domain.model.StatusOrdemServico;
+import com.postech.challenge.domain.model.vo.CpfCnpj;
+import com.postech.challenge.domain.model.vo.Placa;
 import com.postech.challenge.infrastructure.persistence.entity.ClienteEntity;
 import com.postech.challenge.infrastructure.persistence.entity.InsumoEntity;
 import com.postech.challenge.infrastructure.persistence.entity.OrdemServicoEntity;
 import com.postech.challenge.infrastructure.persistence.entity.PecaEntity;
 import com.postech.challenge.infrastructure.persistence.entity.ServicoEntity;
-import com.postech.challenge.domain.model.StatusOrdemServico;
 import com.postech.challenge.infrastructure.persistence.entity.VeiculoEntity;
 import com.postech.challenge.infrastructure.persistence.repository.ClienteRepository;
 import com.postech.challenge.infrastructure.persistence.repository.InsumoRepository;
@@ -35,8 +36,6 @@ import jakarta.persistence.EntityNotFoundException;
 @Service
 public class OrdemServicoServiceUsecaseImpl extends OrdemServicoServiceUsecase {
 
-    private static final Pattern PLACA_PATTERN = Pattern.compile("^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$");
-
     private final OrdemServicoRepository ordemServicoRepository;
     private final ClienteRepository clienteRepository;
     private final VeiculoRepository veiculoRepository;
@@ -44,7 +43,7 @@ public class OrdemServicoServiceUsecaseImpl extends OrdemServicoServiceUsecase {
     private final InsumoRepository insumoRepository;
     private final PecaRepository pecaRepository;
     private final OrdemServicoDataMapper ordemServicoDataMapper;
-    private final OrcamentoNotificacaoGateway orcamentoNotificacaoGateway;
+    private final NotificacaoOrdemServicoGateway notificacaoGateway;
 
     public OrdemServicoServiceUsecaseImpl(
             OrdemServicoRepository ordemServicoRepository,
@@ -54,7 +53,7 @@ public class OrdemServicoServiceUsecaseImpl extends OrdemServicoServiceUsecase {
             InsumoRepository insumoRepository,
             PecaRepository pecaRepository,
             OrdemServicoDataMapper ordemServicoDataMapper,
-            OrcamentoNotificacaoGateway orcamentoNotificacaoGateway) {
+            NotificacaoOrdemServicoGateway notificacaoGateway) {
         this.ordemServicoRepository = ordemServicoRepository;
         this.clienteRepository = clienteRepository;
         this.veiculoRepository = veiculoRepository;
@@ -62,12 +61,20 @@ public class OrdemServicoServiceUsecaseImpl extends OrdemServicoServiceUsecase {
         this.insumoRepository = insumoRepository;
         this.pecaRepository = pecaRepository;
         this.ordemServicoDataMapper = ordemServicoDataMapper;
-        this.orcamentoNotificacaoGateway = orcamentoNotificacaoGateway;
+        this.notificacaoGateway = notificacaoGateway;
     }
 
     @Override
     public List<OrdemServicoResponseDTO> findAll() {
         return ordemServicoRepository.findAll()
+                .stream()
+                .map(ordemServicoDataMapper::toResponse)
+                .toList();
+    }
+
+    @Override
+    public List<OrdemServicoResponseDTO> listarAtivas() {
+        return ordemServicoRepository.findAtivasOrdenadas()
                 .stream()
                 .map(ordemServicoDataMapper::toResponse)
                 .toList();
@@ -89,7 +96,7 @@ public class OrdemServicoServiceUsecaseImpl extends OrdemServicoServiceUsecase {
         List<InsumoEntity> insumos = findInsumosByIds(request.insumosSolicitadosIds());
         List<PecaEntity> pecas = findPecasByIds(request.pecasSolicitadasIds());
         LocalDateTime dataAbertura = Optional.ofNullable(request.dataAbertura()).orElse(LocalDateTime.now());
-        BigDecimal valorOrcamento = calculateOrcamento(servicos, pecas);
+        BigDecimal valorOrcamento = calcularOrcamento(servicos, pecas);
 
         OrdemServicoEntity ordemServico = ordemServicoDataMapper.toEntity(
                 cliente,
@@ -110,7 +117,7 @@ public class OrdemServicoServiceUsecaseImpl extends OrdemServicoServiceUsecase {
 
     @Override
     public OrdemServicoResponseDTO createByClienteCpfCnpj(OrdemServicoCreateByClienteRequestDTO request) {
-        String normalizedCpfCnpj = normalizeAndValidateCpfCnpj(request.clienteCpfCnpj());
+        String normalizedCpfCnpj = CpfCnpj.of(request.clienteCpfCnpj()).value();
         ClienteEntity cliente = clienteRepository.findByCpfCnpj(normalizedCpfCnpj)
                 .orElseThrow(() -> new EntityNotFoundException("Cliente not found by CPF/CNPJ: " + normalizedCpfCnpj));
         VeiculoEntity veiculo = resolveVeiculo(cliente, request);
@@ -124,7 +131,7 @@ public class OrdemServicoServiceUsecaseImpl extends OrdemServicoServiceUsecase {
                 StatusOrdemServico.RECEBIDA,
                 LocalDateTime.now(),
                 null,
-                calculateOrcamento(servicos, pecas),
+                calcularOrcamento(servicos, pecas),
                 null,
                 null,
                 servicos,
@@ -146,7 +153,7 @@ public class OrdemServicoServiceUsecaseImpl extends OrdemServicoServiceUsecase {
         List<ServicoEntity> servicos = findServicosByIds(request.servicosSolicitadosIds());
         List<InsumoEntity> insumos = findInsumosByIds(request.insumosSolicitadosIds());
         List<PecaEntity> pecas = findPecasByIds(request.pecasSolicitadasIds());
-        BigDecimal valorOrcamento = calculateOrcamento(servicos, pecas);
+        BigDecimal valorOrcamento = calcularOrcamento(servicos, pecas);
 
         ordemServicoDataMapper.updateEntity(
                 ordemServico,
@@ -171,67 +178,56 @@ public class OrdemServicoServiceUsecaseImpl extends OrdemServicoServiceUsecase {
         OrdemServicoEntity ordemServico = getOrdemServicoById(id);
         List<PecaEntity> pecas = findPecasByIds(pecasIds);
         ordemServico.setPecasSolicitadas(pecas);
-        ordemServico.setValorOrcamento(calculateOrcamento(ordemServico.getServicosSolicitados(), pecas));
+
+        OrdemServico ordem = toDomain(ordemServico);
+        ordem.atualizarPecas(precosDasPecas(pecas));
+        ordemServico.setValorOrcamento(ordem.getValorOrcamento());
+
         return ordemServicoDataMapper.toResponse(ordemServicoRepository.save(ordemServico));
     }
 
     @Override
     public OrdemServicoResponseDTO iniciarDiagnostico(UUID id) {
-        OrdemServicoEntity ordemServico = getOrdemServicoById(id);
-        validateStatusForAction(ordemServico, List.of(StatusOrdemServico.RECEBIDA), "iniciar diagnostico");
-        ordemServico.setStatus(StatusOrdemServico.EM_DIAGNOSTICO);
-        return ordemServicoDataMapper.toResponse(ordemServicoRepository.save(ordemServico));
+        return aplicarTransicao(id, OrdemServico::iniciarDiagnostico);
     }
 
     @Override
     public OrdemServicoResponseDTO enviarOrcamento(UUID id) {
-        OrdemServicoEntity ordemServico = getOrdemServicoById(id);
-        validateStatusForAction(ordemServico, List.of(StatusOrdemServico.EM_DIAGNOSTICO), "enviar orcamento");
-        ordemServico.setValorOrcamento(calculateOrcamento(ordemServico.getServicosSolicitados(), ordemServico.getPecasSolicitadas()));
-        ordemServico.setDataEnvioOrcamento(LocalDateTime.now());
-        ordemServico.setStatus(StatusOrdemServico.AGUARDANDO_APROVACAO);
-        OrdemServicoEntity ordemAtualizada = ordemServicoRepository.save(ordemServico);
-        orcamentoNotificacaoGateway.enviarOrcamento(ordemAtualizada);
-        return ordemServicoDataMapper.toResponse(ordemAtualizada);
+        return aplicarTransicao(id, OrdemServico::enviarOrcamento);
     }
 
     @Override
     public OrdemServicoResponseDTO aprovarOrcamento(UUID id, boolean aprovado) {
         OrdemServicoEntity ordemServico = getOrdemServicoById(id);
-        validateStatusForAction(ordemServico, List.of(StatusOrdemServico.AGUARDANDO_APROVACAO), "aprovar orcamento");
-        ordemServico.setOrcamentoAprovado(aprovado);
+        OrdemServico ordem = toDomain(ordemServico);
+        ordem.aprovarOrcamento(aprovado);
+
         if (aprovado) {
             consumirEstoquePecas(ordemServico.getPecasSolicitadas());
             consumirEstoqueInsumos(ordemServico.getInsumosSolicitados());
-            ordemServico.setStatus(StatusOrdemServico.EM_EXECUCAO);
-        } else {
-            ordemServico.setStatus(StatusOrdemServico.RECEBIDA);
         }
-        return ordemServicoDataMapper.toResponse(ordemServicoRepository.save(ordemServico));
+
+        applyDomain(ordemServico, ordem);
+        OrdemServicoEntity atualizada = ordemServicoRepository.save(ordemServico);
+        notificacaoGateway.notificarAtualizacaoStatus(atualizada);
+        return ordemServicoDataMapper.toResponse(atualizada);
     }
 
     @Override
     public OrdemServicoResponseDTO finalizar(UUID id) {
-        OrdemServicoEntity ordemServico = getOrdemServicoById(id);
-        validateStatusForAction(ordemServico, List.of(StatusOrdemServico.EM_EXECUCAO), "finalizar ordem");
-        ordemServico.setStatus(StatusOrdemServico.FINALIZADA);
-        ordemServico.setDataFinalizacao(LocalDateTime.now());
-        return ordemServicoDataMapper.toResponse(ordemServicoRepository.save(ordemServico));
+        return aplicarTransicao(id, OrdemServico::finalizar);
     }
 
     @Override
     public OrdemServicoResponseDTO entregar(UUID id) {
-        OrdemServicoEntity ordemServico = getOrdemServicoById(id);
-        validateStatusForAction(ordemServico, List.of(StatusOrdemServico.FINALIZADA), "entregar ordem");
-        ordemServico.setStatus(StatusOrdemServico.ENTREGUE);
-        return ordemServicoDataMapper.toResponse(ordemServicoRepository.save(ordemServico));
+        return aplicarTransicao(id, OrdemServico::entregar);
     }
 
     @Override
     public AcompanhamentoOrdemServicoResponseDTO consultarAcompanhamento(UUID id, String cpfCnpj) {
         OrdemServicoEntity ordemServico = getOrdemServicoById(id);
-        String normalizedCpfCnpj = normalizeAndValidateCpfCnpj(cpfCnpj);
-        String clienteCpfCnpj = CpfCnpjValidator.normalize(ordemServico.getCliente().getCpfCnpj());
+        String normalizedCpfCnpj = CpfCnpj.of(cpfCnpj).value();
+        String clienteCpfCnpj = CpfCnpj.normalize(ordemServico.getCliente().getCpfCnpj());
 
         if (!clienteCpfCnpj.equals(normalizedCpfCnpj)) {
             throw new EntityNotFoundException("OrdemServico not found for informed CPF/CNPJ");
@@ -257,6 +253,37 @@ public class OrdemServicoServiceUsecaseImpl extends OrdemServicoServiceUsecase {
         ordemServicoRepository.deleteById(id);
     }
 
+    private OrdemServicoResponseDTO aplicarTransicao(UUID id, java.util.function.Consumer<OrdemServico> transicao) {
+        OrdemServicoEntity ordemServico = getOrdemServicoById(id);
+        OrdemServico ordem = toDomain(ordemServico);
+        transicao.accept(ordem);
+        applyDomain(ordemServico, ordem);
+        OrdemServicoEntity atualizada = ordemServicoRepository.save(ordemServico);
+        notificacaoGateway.notificarAtualizacaoStatus(atualizada);
+        return ordemServicoDataMapper.toResponse(atualizada);
+    }
+
+    private OrdemServico toDomain(OrdemServicoEntity entity) {
+        return OrdemServico.reconstituir(
+                entity.getId(),
+                entity.getStatus(),
+                entity.getDataAbertura(),
+                entity.getDataFinalizacao(),
+                entity.getDataEnvioOrcamento(),
+                entity.getValorOrcamento(),
+                entity.getOrcamentoAprovado(),
+                entity.getServicosSolicitados().size(),
+                precosDasPecas(entity.getPecasSolicitadas()));
+    }
+
+    private void applyDomain(OrdemServicoEntity entity, OrdemServico ordem) {
+        entity.setStatus(ordem.getStatus());
+        entity.setDataFinalizacao(ordem.getDataFinalizacao());
+        entity.setDataEnvioOrcamento(ordem.getDataEnvioOrcamento());
+        entity.setValorOrcamento(ordem.getValorOrcamento());
+        entity.setOrcamentoAprovado(ordem.getOrcamentoAprovado());
+    }
+
     private OrdemServicoEntity getOrdemServicoById(UUID id) {
         return ordemServicoRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("OrdemServico not found: " + id));
@@ -273,7 +300,7 @@ public class OrdemServicoServiceUsecaseImpl extends OrdemServicoServiceUsecase {
     }
 
     private VeiculoEntity resolveVeiculo(ClienteEntity cliente, OrdemServicoCreateByClienteRequestDTO request) {
-        String normalizedPlaca = normalizeAndValidatePlaca(request.veiculoPlaca());
+        String normalizedPlaca = Placa.of(request.veiculoPlaca()).value();
         Optional<VeiculoEntity> existingVeiculo = veiculoRepository.findByPlaca(normalizedPlaca);
 
         if (existingVeiculo.isPresent()) {
@@ -327,13 +354,14 @@ public class OrdemServicoServiceUsecaseImpl extends OrdemServicoServiceUsecase {
                 .toList();
     }
 
-    private BigDecimal calculateOrcamento(List<ServicoEntity> servicos, List<PecaEntity> pecas) {
-        BigDecimal valorServicos = BigDecimal.valueOf(servicos.size()).multiply(BigDecimal.valueOf(150));
-        BigDecimal valorPecas = pecas.stream()
+    private BigDecimal calcularOrcamento(List<ServicoEntity> servicos, List<PecaEntity> pecas) {
+        return OrdemServico.calcularOrcamento(servicos.size(), precosDasPecas(pecas));
+    }
+
+    private List<BigDecimal> precosDasPecas(List<PecaEntity> pecas) {
+        return pecas.stream()
                 .map(PecaEntity::getPrecoUnitario)
-                .map(valor -> valor == null ? BigDecimal.ZERO : valor)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-        return valorServicos.add(valorPecas);
+                .toList();
     }
 
     private void consumirEstoquePecas(List<PecaEntity> pecas) {
@@ -358,17 +386,6 @@ public class OrdemServicoServiceUsecaseImpl extends OrdemServicoServiceUsecase {
         }
     }
 
-    private void validateStatusForAction(
-            OrdemServicoEntity ordemServico,
-            List<StatusOrdemServico> allowedStatus,
-            String actionName) {
-        if (!allowedStatus.contains(ordemServico.getStatus())) {
-            throw new IllegalStateException(
-                    "Cannot " + actionName + " when status is " + ordemServico.getStatus()
-                            + ". Allowed: " + allowedStatus);
-        }
-    }
-
     private StatusOrdemServico parseStatusOrDefault(String status, StatusOrdemServico defaultValue) {
         if (status == null || status.isBlank()) {
             return defaultValue;
@@ -383,25 +400,5 @@ public class OrdemServicoServiceUsecaseImpl extends OrdemServicoServiceUsecase {
             throw new IllegalArgumentException(
                     "Invalid status: " + status + ". Allowed values: RECEBIDA, EM_DIAGNOSTICO, AGUARDANDO_APROVACAO, EM_EXECUCAO, FINALIZADA, ENTREGUE");
         }
-    }
-
-    private String normalizeAndValidateCpfCnpj(String cpfCnpj) {
-        String normalized = CpfCnpjValidator.normalize(cpfCnpj);
-        if (!CpfCnpjValidator.isValid(normalized)) {
-            throw new IllegalArgumentException("Invalid CPF/CNPJ");
-        }
-        return normalized;
-    }
-
-    private String normalizeAndValidatePlaca(String placa) {
-        if (placa == null || placa.isBlank()) {
-            throw new IllegalArgumentException("Placa is required");
-        }
-
-        String normalized = placa.toUpperCase().replace("-", "").trim();
-        if (!PLACA_PATTERN.matcher(normalized).matches()) {
-            throw new IllegalArgumentException("Invalid placa format. Expected pattern AAA0A00");
-        }
-        return normalized;
     }
 }

@@ -9,7 +9,12 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.transaction.annotation.Transactional;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import com.postech.challenge.application.dto.AcompanhamentoOrdemServicoResponseDTO;
 import com.postech.challenge.application.dto.OrdemServicoCreateByClienteRequestDTO;
@@ -24,8 +29,23 @@ import com.postech.challenge.infrastructure.persistence.repository.PecaRepositor
 import com.postech.challenge.infrastructure.persistence.repository.ServicoRepository;
 
 @SpringBootTest
+@Testcontainers(disabledWithoutDocker = true)
 @Transactional
 class OrdemServicoServiceUsecaseIntegrationTest {
+
+    @Container
+    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15-alpine");
+
+    @DynamicPropertySource
+    static void datasourceProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.url", postgres::getJdbcUrl);
+        registry.add("spring.datasource.username", postgres::getUsername);
+        registry.add("spring.datasource.password", postgres::getPassword);
+        registry.add("spring.datasource.driver-class-name", () -> "org.postgresql.Driver");
+        registry.add("spring.jpa.properties.hibernate.dialect", () -> "org.hibernate.dialect.PostgreSQLDialect");
+        registry.add("spring.jpa.hibernate.ddl-auto", () -> "create-drop");
+        registry.add("spring.sql.init.mode", () -> "never");
+    }
 
     @Autowired
     private OrdemServicoServiceUsecase ordemServicoServiceUsecase;

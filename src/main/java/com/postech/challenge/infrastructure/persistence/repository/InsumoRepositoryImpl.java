@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository;
 import com.postech.challenge.infrastructure.persistence.entity.InsumoEntity;
 
 @Repository
-public class InsumoRepositoryImpl extends InsumoRepository {
+public class InsumoRepositoryImpl implements InsumoRepository {
 
     private final InsumoJpaRepository insumoJpaRepository;
 
