@@ -60,10 +60,12 @@ jobs:
           name: oficina-api-image
           path: /tmp/oficina-api.tar
 
-  deploy-to-kind:
-    name: Deploy to local Kubernetes (kind)
+  deploy-terraform-k8s:
+    name: Deploy with Terraform and Kubernetes
     needs: docker-image
     runs-on: ubuntu-latest
+    env:
+      TF_VAR_jwt_secret: ${{ secrets.JWT_SECRET || 'ciDefaultSecretChangeMeChangeMeChangeMeChangeMe1234567890' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -74,33 +76,54 @@ jobs:
           name: oficina-api-image
           path: /tmp
 
-      - name: Create kind cluster
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.8
+
+      - name: Install kind CLI
         uses: helm/kind-action@v1
         with:
-          cluster_name: oficina-cluster
+          install_only: true
+
+      - name: Terraform Init
+        working-directory: infra
+        run: terraform init
+
+      - name: Terraform Apply
+        working-directory: infra
+        run: terraform apply -auto-approve
+
+      - name: Configure kubectl
+        run: echo "KUBECONFIG=$(terraform -chdir=infra output -raw kubeconfig_path)" >> $GITHUB_ENV
 
       - name: Load image into kind
         run: |
           docker load --input /tmp/oficina-api.tar
           kind load docker-image oficina-api:latest --name oficina-cluster
 
+      - name: Wait for Terraform-managed database rollout
+        run: kubectl -n oficina rollout status deployment/postgres --timeout=180s
+
       - name: Apply Kubernetes manifests
         run: |
-          kubectl apply -f k8s/00-namespace.yaml
           kubectl apply -f k8s/01-configmap.yaml
           kubectl apply -f k8s/02-secret.yaml
-          kubectl apply -f k8s/03-postgres.yaml
           kubectl apply -f k8s/04-mailhog.yaml
           kubectl apply -f k8s/05-app.yaml
           kubectl apply -f k8s/06-hpa.yaml
 
-      - name: Wait for rollouts
-        run: |
-          kubectl -n oficina rollout status deployment/postgres --timeout=180s
-          kubectl -n oficina rollout status deployment/oficina-api --timeout=240s
+      - name: Wait for application rollout
+        run: kubectl -n oficina rollout status deployment/oficina-api --timeout=240s
 
       - name: Show deployment state
         if: always()
         run: |
+          terraform -chdir=infra output
           kubectl -n oficina get all
           kubectl -n oficina describe pods -l app=oficina-api
+
+      - name: Terraform Destroy
+        if: always()
+        working-directory: infra
+        run: terraform destroy -auto-approve

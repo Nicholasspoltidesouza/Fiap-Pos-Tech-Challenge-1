@@ -57,6 +57,10 @@ kubectl -n oficina get pods
 
 > O PostgreSQL e o namespace já são criados pelo Terraform; por isso não é necessário aplicar
 > `00-namespace.yaml` nem `03-postgres.yaml` quando se usa esta stack.
+>
+> O pipeline de CI/CD (`.github/workflows/ci-cd.yml`) segue o mesmo fluxo: `terraform apply` em `infra/`
+> provisiona cluster, namespace, metrics-server e banco; em seguida aplica os manifestos `01`, `02`, `04`,
+> `05` e `06` de `k8s/`.
 
 ## Destruir
 

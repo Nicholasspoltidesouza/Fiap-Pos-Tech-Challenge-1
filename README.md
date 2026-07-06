@@ -329,6 +329,8 @@ flowchart LR
     Dev[Desenvolvedor] -->|push| GH[GitHub Actions]
     GH -->|mvn verify| Tests[Testes + JaCoCo]
     GH -->|docker build| Img[(Imagem oficina-api)]
+    GH -->|terraform apply| TF[Terraform infra/]
+    TF --> Cluster
     GH -->|kind load + kubectl apply| Cluster
     subgraph Cluster [Cluster Kubernetes - kind]
         App[Deployment oficina-api + HPA]
@@ -408,7 +410,7 @@ O workflow `.github/workflows/ci-cd.yml` executa, a cada push/PR para `main`:
 
 1. **Build & Test** — `./mvnw verify` (inclui testes de integração com Testcontainers) e publica o relatório JaCoCo.
 2. **Docker image** — build da imagem da aplicação.
-3. **Deploy to kind** — cria um cluster kind efêmero, carrega a imagem, aplica os manifestos de `k8s/` e valida o rollout.
+3. **Deploy with Terraform and Kubernetes** — provisiona o cluster kind, namespace, metrics-server e PostgreSQL via Terraform (`infra/`), carrega a imagem no cluster, aplica os manifestos restantes de `k8s/` (ConfigMap, Secret, MailHog, app e HPA), valida os rollouts e destrói a infraestrutura ao final.
 
 ## 11) Solução de Problemas
 
