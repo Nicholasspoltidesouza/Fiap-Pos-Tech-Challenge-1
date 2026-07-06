@@ -8,6 +8,10 @@ import java.util.UUID;
 
 import com.postech.challenge.domain.model.StatusOrdemServico;
 
+import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -24,6 +28,7 @@ import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "tb_ordem_servico")
+@BatchSize(size = 20)
 public class OrdemServicoEntity {
 
     @Id
@@ -40,6 +45,7 @@ public class OrdemServicoEntity {
     private VeiculoEntity veiculo;
 
     @ManyToMany
+    @Fetch(FetchMode.SUBSELECT)
     @JoinTable(
             name = "tb_ordem_servico_servico",
             joinColumns = @JoinColumn(name = "ordem_servico_id"),
@@ -47,6 +53,7 @@ public class OrdemServicoEntity {
     private List<ServicoEntity> servicosSolicitados = new ArrayList<>();
 
     @ManyToMany
+    @Fetch(FetchMode.SUBSELECT)
     @JoinTable(
             name = "tb_ordem_servico_insumo",
             joinColumns = @JoinColumn(name = "ordem_servico_id"),
@@ -54,6 +61,7 @@ public class OrdemServicoEntity {
     private List<InsumoEntity> insumosSolicitados = new ArrayList<>();
 
     @ManyToMany
+    @Fetch(FetchMode.SUBSELECT)
     @JoinTable(
             name = "tb_ordem_servico_peca",
             joinColumns = @JoinColumn(name = "ordem_servico_id"),
