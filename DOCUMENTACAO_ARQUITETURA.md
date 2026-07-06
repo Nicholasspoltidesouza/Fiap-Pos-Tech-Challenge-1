@@ -1,6 +1,8 @@
 # Documentacao de Arquitetura
 
-Este documento descreve a arquitetura do projeto `FIAP Pos Tech - Tech Challenge 1`, incluindo camadas, responsabilidades, fluxo de dependencia e principais decisoes.
+Este documento descreve a arquitetura do projeto `FIAP Pos Tech - Tech Challenge` (Fase 2), incluindo camadas, responsabilidades, fluxo de dependencia e principais decisoes.
+
+> Para os **diagramas visuais completos** (componentes, infraestrutura e CI/CD), consulte `docs/DIAGRAMA_ARQUITETURA.md`.
 
 ## 1) Visao Geral
 

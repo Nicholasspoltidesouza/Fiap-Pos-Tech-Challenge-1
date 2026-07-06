@@ -19,6 +19,7 @@ Este projeto contempla:
 
 ## Documentação de Arquitetura e Modelagem
 
+- `docs/DIAGRAMA_ARQUITETURA.md`: **diagramas visuais** da solução (componentes, infraestrutura provisionada e fluxo de deploy).
 - `DOCUMENTACAO_ARQUITETURA.md`: diagrama em camadas, responsabilidades e fluxo de dependências.
 - `docs/DOMAIN_STORYTELLING.md`: Domain Storytelling (atores, narrativa e diagrama).
 - `docs/EVENT_STORMING.md`: Event Storming evoluído (brainstorm, linha do tempo, eventos pivotais,
