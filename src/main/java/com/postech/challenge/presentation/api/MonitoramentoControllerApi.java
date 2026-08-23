@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.postech.challenge.application.dto.DashboardOperacionalResponseDTO;
 import com.postech.challenge.application.dto.TempoMedioServicoResponseDTO;
 import com.postech.challenge.application.usecase.MonitoramentoServiceUsecase;
 import com.postech.challenge.presentation.api.doc.MonitoramentoControllerApiDoc;
@@ -28,5 +29,11 @@ public class MonitoramentoControllerApi extends MonitoramentoControllerApiDoc {
     @Override
     public ResponseEntity<List<TempoMedioServicoResponseDTO>> findTempoMedioExecucaoPorServico() {
         return ResponseEntity.ok(monitoramentoService.findTempoMedioExecucaoPorServico());
+    }
+
+    @GetMapping("/dashboard")
+    @Override
+    public ResponseEntity<DashboardOperacionalResponseDTO> getDashboardOperacional() {
+        return ResponseEntity.ok(monitoramentoService.getDashboardOperacional());
     }
 }

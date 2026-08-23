@@ -218,3 +218,28 @@ WHERE NOT EXISTS (
     WHERE existing_data.ordem_servico_id = values_data.ordem_servico_id
       AND existing_data.insumo_id = values_data.insumo_id
 );
+
+INSERT INTO tb_ordem_servico_status_historico (id, ordem_servico_id, status, alterado_em)
+SELECT values_data.id, values_data.ordem_servico_id, values_data.status, values_data.alterado_em
+FROM (
+    VALUES
+        ('55555555-5555-5555-5555-555555555501'::uuid, '44444444-4444-4444-4444-444444444443'::uuid, 'RECEBIDA', NOW() - INTERVAL '10 days'),
+        ('55555555-5555-5555-5555-555555555502'::uuid, '44444444-4444-4444-4444-444444444443'::uuid, 'EM_DIAGNOSTICO', NOW() - INTERVAL '10 days' + INTERVAL '2 hours'),
+        ('55555555-5555-5555-5555-555555555503'::uuid, '44444444-4444-4444-4444-444444444443'::uuid, 'EM_EXECUCAO', NOW() - INTERVAL '9 days'),
+        ('55555555-5555-5555-5555-555555555504'::uuid, '44444444-4444-4444-4444-444444444443'::uuid, 'FINALIZADA', NOW() - INTERVAL '8 days'),
+        ('55555555-5555-5555-5555-555555555505'::uuid, '44444444-4444-4444-4444-444444444442'::uuid, 'RECEBIDA', NOW() - INTERVAL '3 days'),
+        ('55555555-5555-5555-5555-555555555506'::uuid, '44444444-4444-4444-4444-444444444442'::uuid, 'EM_DIAGNOSTICO', NOW() - INTERVAL '2 days'),
+        ('55555555-5555-5555-5555-555555555507'::uuid, '44444444-4444-4444-4444-444444444448'::uuid, 'RECEBIDA', NOW() - INTERVAL '2 days'),
+        ('55555555-5555-5555-5555-555555555508'::uuid, '44444444-4444-4444-4444-444444444448'::uuid, 'EM_DIAGNOSTICO', NOW() - INTERVAL '2 days' + INTERVAL '4 hours'),
+        ('55555555-5555-5555-5555-555555555509'::uuid, '44444444-4444-4444-4444-444444444448'::uuid, 'EM_EXECUCAO', NOW() - INTERVAL '1 day'),
+        ('55555555-5555-5555-5555-55555555550a'::uuid, '44444444-4444-4444-4444-444444444445'::uuid, 'RECEBIDA', NOW() - INTERVAL '5 hours'),
+        ('55555555-5555-5555-5555-55555555550b'::uuid, '44444444-4444-4444-4444-44444444444a'::uuid, 'RECEBIDA', NOW() - INTERVAL '15 days'),
+        ('55555555-5555-5555-5555-55555555550c'::uuid, '44444444-4444-4444-4444-44444444444a'::uuid, 'EM_DIAGNOSTICO', NOW() - INTERVAL '15 days' + INTERVAL '90 minutes'),
+        ('55555555-5555-5555-5555-55555555550d'::uuid, '44444444-4444-4444-4444-44444444444a'::uuid, 'EM_EXECUCAO', NOW() - INTERVAL '14 days' - INTERVAL '12 hours'),
+        ('55555555-5555-5555-5555-55555555550e'::uuid, '44444444-4444-4444-4444-44444444444a'::uuid, 'FINALIZADA', NOW() - INTERVAL '14 days')
+) AS values_data(id, ordem_servico_id, status, alterado_em)
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM tb_ordem_servico_status_historico existing_data
+    WHERE existing_data.id = values_data.id
+);

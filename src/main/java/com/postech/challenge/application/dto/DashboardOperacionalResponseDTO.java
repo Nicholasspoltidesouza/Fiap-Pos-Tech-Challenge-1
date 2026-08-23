@@ -1,11 +1,13 @@
 package com.postech.challenge.application.dto;
 
-import java.util.List;
+import java.time.LocalDate;
 
 public record DashboardOperacionalResponseDTO(
-        List<VolumeDiarioOrdemServicoResponseDTO> volumeDiario,
-        List<TempoMedioStatusResponseDTO> tempoMedioPorStatus,
-        List<TempoMedioServicoResponseDTO> tempoMedioPorServico,
-        double errosIntegracao
-) {
+        LocalDate dataReferencia,
+        long volumeDiarioOrdens,
+        Double tempoMedioDiagnosticoMinutos,
+        Double tempoMedioExecucaoMinutos,
+        Double tempoMedioFinalizacaoMinutos,
+        double falhasProcessamento,
+        double errosIntegracao) {
 }

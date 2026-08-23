@@ -1,5 +1,6 @@
 package com.postech.challenge.infrastructure.persistence.repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -29,4 +30,6 @@ public interface OrdemServicoJpaRepository extends JpaRepository<OrdemServicoEnt
             )
             """)
     List<OrdemServicoEntity> findAtivas();
+
+    long countByDataAberturaGreaterThanEqual(LocalDateTime inicio);
 }

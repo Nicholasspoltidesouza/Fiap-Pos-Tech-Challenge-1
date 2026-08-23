@@ -291,10 +291,15 @@ public class OrdemServicoServiceUsecaseImpl extends OrdemServicoServiceUsecase {
     }
 
     private void registrarHistorico(OrdemServicoEntity ordemServico) {
+        LocalDateTime agora = LocalDateTime.now();
+        statusHistoricoRepository.findFirstByOrdemServico_IdOrderByAlteradoEmDesc(ordemServico.getId())
+                .ifPresent(anterior -> observabilidadeServico.registrarDuracaoStatus(
+                        anterior.getStatus(),
+                        java.time.Duration.between(anterior.getAlteradoEm(), agora)));
         OrdemServicoStatusHistoricoEntity historico = new OrdemServicoStatusHistoricoEntity();
         historico.setOrdemServico(ordemServico);
         historico.setStatus(ordemServico.getStatus());
-        historico.setAlteradoEm(LocalDateTime.now());
+        historico.setAlteradoEm(agora);
         statusHistoricoRepository.save(historico);
     }
 

@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.http.ResponseEntity;
 
+import com.postech.challenge.application.dto.DashboardOperacionalResponseDTO;
 import com.postech.challenge.application.dto.TempoMedioServicoResponseDTO;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -40,4 +41,19 @@ public abstract class MonitoramentoControllerApiDoc {
             @ApiResponse(responseCode = "403", description = "Sem permissao para acessar o recurso")
     })
     public abstract ResponseEntity<List<TempoMedioServicoResponseDTO>> findTempoMedioExecucaoPorServico();
+
+    @Operation(
+            summary = "Dashboard operacional",
+            description = "Volume diario de ordens, tempo medio em Diagnostico/Execucao/Finalizacao e falhas de processamento/integracao.")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Dashboard operacional retornado com sucesso",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = DashboardOperacionalResponseDTO.class))),
+            @ApiResponse(responseCode = "401", description = "Nao autenticado"),
+            @ApiResponse(responseCode = "403", description = "Sem permissao para acessar o recurso")
+    })
+    public abstract ResponseEntity<DashboardOperacionalResponseDTO> getDashboardOperacional();
 }

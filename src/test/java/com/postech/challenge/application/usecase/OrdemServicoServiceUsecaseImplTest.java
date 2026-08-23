@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -32,6 +33,7 @@ import com.postech.challenge.domain.exception.DomainException;
 import com.postech.challenge.infrastructure.persistence.entity.ClienteEntity;
 import com.postech.challenge.infrastructure.persistence.entity.InsumoEntity;
 import com.postech.challenge.infrastructure.persistence.entity.OrdemServicoEntity;
+import com.postech.challenge.infrastructure.persistence.entity.OrdemServicoStatusHistoricoEntity;
 import com.postech.challenge.infrastructure.persistence.entity.PecaEntity;
 import com.postech.challenge.infrastructure.persistence.entity.ServicoEntity;
 import com.postech.challenge.domain.model.StatusCliente;
@@ -751,15 +753,22 @@ class OrdemServicoServiceUsecaseImplTest {
         ordem.setStatus(StatusOrdemServico.EM_EXECUCAO);
         OrdemServicoResponseDTO response = buildResponse(ordemId);
 
+        OrdemServicoStatusHistoricoEntity previous = new OrdemServicoStatusHistoricoEntity();
+        previous.setStatus(StatusOrdemServico.EM_EXECUCAO);
+        previous.setAlteradoEm(LocalDateTime.now().minusHours(2));
+
         when(ordemServicoRepository.findById(ordemId)).thenReturn(Optional.of(ordem));
         when(ordemServicoRepository.save(ordem)).thenReturn(ordem);
         when(ordemServicoDataMapper.toResponse(ordem)).thenReturn(response);
+        when(statusHistoricoRepository.findFirstByOrdemServico_IdOrderByAlteradoEmDesc(ordemId))
+                .thenReturn(Optional.of(previous));
 
         OrdemServicoResponseDTO result = ordemServicoService.finalizar(ordemId);
 
         assertEquals(response, result);
         assertEquals(StatusOrdemServico.FINALIZADA, ordem.getStatus());
         assertNotNull(ordem.getDataFinalizacao());
+        verify(observabilidadeServico).registrarDuracaoStatus(eq(StatusOrdemServico.EM_EXECUCAO), any());
     }
 
     @Test
