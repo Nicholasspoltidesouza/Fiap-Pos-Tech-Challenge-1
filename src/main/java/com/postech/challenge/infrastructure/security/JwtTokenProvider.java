@@ -8,6 +8,7 @@ import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.security.Keys;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -24,14 +25,22 @@ public class JwtTokenProvider {
     private final SecretKey signingKey;
     private final long accessTokenExpirationMs;
     private final long refreshTokenExpirationMs;
+    private final String issuer;
 
+    @Autowired
     public JwtTokenProvider(
             @Value("${jwt.secret}") String secret,
             @Value("${jwt.access-expiration-ms}") long accessTokenExpirationMs,
-            @Value("${jwt.refresh-expiration-ms}") long refreshTokenExpirationMs) {
+            @Value("${jwt.refresh-expiration-ms}") long refreshTokenExpirationMs,
+            @Value("${jwt.issuer:oficina-auth}") String issuer) {
         this.signingKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         this.accessTokenExpirationMs = accessTokenExpirationMs;
         this.refreshTokenExpirationMs = refreshTokenExpirationMs;
+        this.issuer = issuer;
+    }
+
+    public JwtTokenProvider(String secret, long accessTokenExpirationMs, long refreshTokenExpirationMs) {
+        this(secret, accessTokenExpirationMs, refreshTokenExpirationMs, "oficina-auth");
     }
 
     public String generateAccessToken(UUID userId, String email, String profile) {
@@ -47,14 +56,24 @@ public class JwtTokenProvider {
         Date expiry = new Date(now.getTime() + expirationMs);
 
         return Jwts.builder()
+                .issuer(issuer)
                 .subject(email)
                 .claim("userId", userId.toString())
                 .claim("profile", profile)
                 .claim("tokenType", tokenType)
                 .issuedAt(now)
                 .expiration(expiry)
-                .signWith(signingKey)
+                .signWith(signingKey, Jwts.SIG.HS512)
                 .compact();
+    }
+
+    public String extractCpf(String token) {
+        String cpf = extractClaims(token).get("cpf", String.class);
+        return cpf != null ? cpf : extractClaims(token).getSubject();
+    }
+
+    public boolean isClientAccessToken(String token) {
+        return "ACCESS".equals(extractTokenType(token)) && "CLIENTE".equals(extractProfile(token));
     }
 
     public String extractEmail(String token) {
@@ -92,6 +111,7 @@ public class JwtTokenProvider {
     private Claims extractClaims(String token) {
         return Jwts.parser()
                 .verifyWith(signingKey)
+                .requireIssuer(issuer)
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();

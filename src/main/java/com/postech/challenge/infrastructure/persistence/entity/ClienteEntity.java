@@ -4,9 +4,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import com.postech.challenge.domain.model.StatusCliente;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -26,7 +30,11 @@ public class ClienteEntity {
     private String nome;
 
     @Column(name = "cpf_cnpj", nullable = false, unique = true, length = 18)
-    private String cpfCnpj; 
+    private String cpfCnpj;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private StatusCliente status = StatusCliente.ATIVO;
 
     @OneToMany(mappedBy = "cliente", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<VeiculoEntity> veiculos = new ArrayList<>();
@@ -53,6 +61,14 @@ public class ClienteEntity {
 
     public void setCpfCnpj(String cpfCnpj) {
         this.cpfCnpj = cpfCnpj;
+    }
+
+    public StatusCliente getStatus() {
+        return status;
+    }
+
+    public void setStatus(StatusCliente status) {
+        this.status = status;
     }
 
     public List<VeiculoEntity> getVeiculos() {

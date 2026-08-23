@@ -1,0 +1,45 @@
+flowchart TB
+    subgraph Users["Usuarios"]
+        ATD["Atendente / Mecanico / Admin"]
+        CLI["Cliente final"]
+        EXT["Sistema externo de aprovacao"]
+    end
+
+    subgraph CICD["CI/CD - GitHub Actions"]
+        GHA["Workflow ci-cd.yml<br/>build + test + deploy"]
+        MVN["Maven / JUnit / Testcontainers / JaCoCo"]
+        IMG["Docker image<br/>oficina-api:latest"]
+        GHA --- MVN
+        GHA --- IMG
+    end
+
+    subgraph IaC["Infraestrutura como Codigo"]
+        TF["Terraform<br/>cluster + namespace + DB + metrics-server"]
+    end
+
+    subgraph Cluster["Kubernetes (kind) - namespace oficina"]
+        SVC["Service NodePort :30080"]
+        HPA["HorizontalPodAutoscaler<br/>1-5 replicas / CPU 70% / Mem 80%"]
+        subgraph AppPod["Deployment oficina-api"]
+            API["API REST - Spring Boot 4 / Java 25<br/>Clean Architecture + DDD + JWT"]
+            SWG["Swagger / OpenAPI"]
+            API --- SWG
+        end
+        PG[("PostgreSQL 15<br/>Deployment + PVC + Secret")]
+        MH["MailHog / SMTP"]
+        MS["metrics-server"]
+    end
+
+    ATD -->|"JWT"| SVC
+    EXT -->|"JWT"| SVC
+    CLI -->|"endpoint publico"| SVC
+    SVC --> API
+    API -->|"JDBC"| PG
+    API -->|"notificacao de status"| MH
+    HPA --> AppPod
+    MS -->|"metricas CPU/RAM"| HPA
+
+    GHA -->|"terraform apply"| TF
+    TF --> Cluster
+    GHA -->|"kind load + kubectl apply"| Cluster
+    IMG --> AppPod

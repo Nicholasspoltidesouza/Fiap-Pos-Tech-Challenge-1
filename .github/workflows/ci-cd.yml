@@ -2,9 +2,9 @@ name: CI/CD
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, homolog ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, homolog ]
 
 jobs:
   build-and-test:
@@ -26,7 +26,7 @@ jobs:
           chmod +x ./mvnw
           ./mvnw -B verify
         env:
-          JWT_SECRET: ${{ secrets.JWT_SECRET || 'ciDefaultSecretChangeMeChangeMeChangeMeChangeMe1234567890' }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET || 'oficina-local-hs512-secret-not-for-production-000000000000000001' }}
 
       - name: Upload JaCoCo coverage report
         if: always()
@@ -65,7 +65,7 @@ jobs:
     needs: docker-image
     runs-on: ubuntu-latest
     env:
-      TF_VAR_jwt_secret: ${{ secrets.JWT_SECRET || 'ciDefaultSecretChangeMeChangeMeChangeMeChangeMe1234567890' }}
+      TF_VAR_jwt_secret: ${{ secrets.JWT_SECRET || 'oficina-local-hs512-secret-not-for-production-000000000000000001' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4

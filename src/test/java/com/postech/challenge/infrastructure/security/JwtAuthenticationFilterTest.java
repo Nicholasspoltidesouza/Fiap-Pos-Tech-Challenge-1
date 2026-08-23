@@ -1,5 +1,6 @@
 package com.postech.challenge.infrastructure.security;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.verify;
@@ -56,6 +57,7 @@ class JwtAuthenticationFilterTest {
 
         when(jwtTokenProvider.isTokenValid(token)).thenReturn(true);
         when(jwtTokenProvider.extractTokenType(token)).thenReturn("ACCESS");
+        when(jwtTokenProvider.isClientAccessToken(token)).thenReturn(false);
         when(jwtTokenProvider.extractEmail(token)).thenReturn("admin@oficina.com");
         when(userDetailsService.loadUserByUsername("admin@oficina.com")).thenReturn(userDetails);
 
@@ -84,5 +86,27 @@ class JwtAuthenticationFilterTest {
         jwtAuthenticationFilter.doFilter(new MockHttpServletRequest(), new MockHttpServletResponse(), new MockFilterChain());
 
         assertNull(SecurityContextHolder.getContext().getAuthentication());
+    }
+
+    @Test
+    void shouldAuthenticateClienteFromCpfToken() throws ServletException, IOException {
+        String token = "client-token";
+        UUID clientId = UUID.randomUUID();
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("Authorization", "Bearer " + token);
+
+        when(jwtTokenProvider.isTokenValid(token)).thenReturn(true);
+        when(jwtTokenProvider.extractTokenType(token)).thenReturn("ACCESS");
+        when(jwtTokenProvider.isClientAccessToken(token)).thenReturn(true);
+        when(jwtTokenProvider.extractUserId(token)).thenReturn(clientId);
+        when(jwtTokenProvider.extractCpf(token)).thenReturn("52998224725");
+
+        jwtAuthenticationFilter.doFilter(request, new MockHttpServletResponse(), new MockFilterChain());
+
+        assertNotNull(SecurityContextHolder.getContext().getAuthentication());
+        CustomUserDetails principal =
+                (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        assertEquals(PerfilUsuario.CLIENTE, principal.getPerfil());
+        assertEquals("52998224725", principal.getCpfCnpj());
     }
 }

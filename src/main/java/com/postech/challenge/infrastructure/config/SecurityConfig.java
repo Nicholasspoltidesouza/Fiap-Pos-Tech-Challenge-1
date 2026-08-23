@@ -5,6 +5,7 @@ import com.postech.challenge.infrastructure.security.JwtAuthenticationEntryPoint
 import com.postech.challenge.infrastructure.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -28,7 +29,7 @@ public class SecurityConfig {
             "/v3/api-docs/**",
             "/actuator/health",
             "/actuator/health/**",
-            "/api/public/ordens-servico/**",
+            "/actuator/prometheus",
             "/error"
     };
 
@@ -59,6 +60,10 @@ public class SecurityConfig {
                         .requestMatchers("/api/insumos/**").hasAnyRole("ADMIN", "ATENDENTE", "MECANICO")
                         .requestMatchers("/api/monitoramento/**").hasAnyRole("ADMIN", "ATENDENTE", "MECANICO")
                         .requestMatchers("/api/servicos/**").hasAnyRole("ADMIN", "ATENDENTE", "MECANICO")
+                        .requestMatchers(HttpMethod.POST, "/api/ordens-servico/cliente")
+                        .hasAnyRole("ADMIN", "ATENDENTE", "CLIENTE")
+                        .requestMatchers(HttpMethod.GET, "/api/ordens-servico/*/acompanhamento")
+                        .hasAnyRole("ADMIN", "ATENDENTE", "CLIENTE")
                         .requestMatchers("/api/ordens-servico/**").hasAnyRole("ADMIN", "ATENDENTE", "MECANICO")
                         .requestMatchers("/api/ordem-servico/**").hasAnyRole("ADMIN", "ATENDENTE", "MECANICO")
                         .requestMatchers("/api/veiculos/**").hasAnyRole("ADMIN", "ATENDENTE")

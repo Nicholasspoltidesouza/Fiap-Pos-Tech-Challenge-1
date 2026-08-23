@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<title>Tech Challenge - Fase 2 - Grupo 50</title>
+<style>
+  @page { size: A4 portrait; margin: 18mm 16mm; }
+  @page landscape { size: A4 landscape; margin: 12mm; }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    color: #1f2933;
+    font-size: 12pt;
+    line-height: 1.55;
+  }
+
+  .cover {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 245mm;
+    text-align: center;
+    border-top: 10px solid #6b46c1;
+    border-bottom: 10px solid #6b46c1;
+    padding: 24px;
+  }
+  .cover .eyebrow {
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #6b46c1;
+    font-weight: 700;
+    font-size: 12pt;
+    margin-bottom: 8px;
+  }
+  .cover h1 {
+    font-size: 30pt;
+    margin: 6px 0 4px;
+    color: #1a202c;
+  }
+  .cover h2 {
+    font-size: 16pt;
+    font-weight: 500;
+    color: #4a5568;
+    margin: 0 0 34px;
+  }
+  .cover .meta {
+    font-size: 13pt;
+    color: #2d3748;
+    margin: 4px 0;
+  }
+  .cover .meta strong { color: #6b46c1; }
+
+  h3.section {
+    color: #6b46c1;
+    border-bottom: 2px solid #e2d9f5;
+    padding-bottom: 6px;
+    margin-top: 30px;
+    font-size: 15pt;
+  }
+
+  .card {
+    background: #f7f5fc;
+    border: 1px solid #e2d9f5;
+    border-left: 5px solid #6b46c1;
+    border-radius: 6px;
+    padding: 14px 18px;
+    margin: 12px 0;
+  }
+  .card .label {
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 9pt;
+    color: #805ad5;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .card a { color: #5a32a3; word-break: break-all; font-weight: 600; }
+  .card .hint { font-size: 10pt; color: #718096; margin-top: 4px; }
+
+  table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 10.5pt; }
+  th, td { border: 1px solid #d9cff0; padding: 7px 10px; text-align: left; vertical-align: top; }
+  th { background: #efe8fb; color: #4a5568; }
+  tr:nth-child(even) td { background: #faf8fe; }
+
+  .diagram-page { page: landscape; page-break-before: always; text-align: center; }
+  .diagram-page h3 { color: #6b46c1; font-size: 16pt; margin: 0 0 10px; }
+  .diagram-page img { width: 100%; height: auto; max-height: 175mm; }
+  .caption { font-size: 9.5pt; color: #718096; margin-top: 8px; }
+
+  .page-break { page-break-before: always; }
+  ul { margin: 6px 0; padding-left: 20px; }
+  li { margin: 3px 0; }
+</style>
+</head>
+<body>
+
+  <section class="cover">
+    <div class="eyebrow">FIAP Pos Tech &middot; Software Architecture</div>
+    <h1>Tech Challenge &mdash; Fase 2</h1>
+    <h2>Sistema de Gest&atilde;o de Oficina Mec&acirc;nica</h2>
+    <div class="meta"><strong>Grupo 50</strong></div>
+    <div class="meta">Nicholas Spolti de Souza</div>
+    <div class="meta" style="margin-top:26px; font-size:11pt; color:#718096;">Entrega: reposit&oacute;rio GitHub, desenho da arquitetura e v&iacute;deo de apresenta&ccedil;&atilde;o</div>
+  </section>
+
+  <div class="page-break"></div>
+
+  <h3 class="section">1. Reposit&oacute;rio GitHub</h3>
+  <div class="card">
+    <div class="label">Reposit&oacute;rio do projeto</div>
+    <a href="https://github.com/Nicholasspoltidesouza/Fiap-Pos-Tech-Challenge-1">https://github.com/Nicholasspoltidesouza/Fiap-Pos-Tech-Challenge-1</a>
+    <div class="hint">Reposit&oacute;rio compartilhado com o usu&aacute;rio <strong>soat-architecture</strong> (acesso de colaborador concedido).</div>
+  </div>
+
+  <h3 class="section">2. V&iacute;deo de apresenta&ccedil;&atilde;o</h3>
+  <div class="card">
+    <div class="label">V&iacute;deo (dura&ccedil;&atilde;o at&eacute; 15 minutos)</div>
+    <a href="https://youtu.be/bpC1dvo5epg">https://youtu.be/bpC1dvo5epg</a>
+    <div class="hint">Apresenta&ccedil;&atilde;o da solu&ccedil;&atilde;o desenvolvida na Fase 2 (arquitetura, dom&iacute;nio rico, infraestrutura e CI/CD).</div>
+  </div>
+
+  <h3 class="section">3. Recursos escolhidos</h3>
+  <table>
+    <thead>
+      <tr><th>Camada</th><th>Recurso / Tecnologia</th><th>Finalidade</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Aplica&ccedil;&atilde;o</td><td>Spring Boot 4 (Java 25), Clean Architecture + DDD</td><td>API REST stateless com dom&iacute;nio rico (agregado OrdemServico)</td></tr>
+      <tr><td>Seguran&ccedil;a</td><td>Spring Security + JWT</td><td>Autentica&ccedil;&atilde;o e autoriza&ccedil;&atilde;o por perfil (ADMIN, ATENDENTE, MECANICO)</td></tr>
+      <tr><td>Persist&ecirc;ncia</td><td>PostgreSQL 15 + Spring Data JPA</td><td>Banco relacional (Deployment + PVC + Secret no cluster)</td></tr>
+      <tr><td>Notifica&ccedil;&atilde;o</td><td>Spring Mail + MailHog (SMTP)</td><td>E-mail nas transi&ccedil;&otilde;es de status da OS</td></tr>
+      <tr><td>Documenta&ccedil;&atilde;o</td><td>Springdoc OpenAPI / Swagger UI</td><td>Contrato e explora&ccedil;&atilde;o dos endpoints</td></tr>
+      <tr><td>Container</td><td>Docker + Docker Compose</td><td>Imagem multi-stage e ambiente local</td></tr>
+      <tr><td>Orquestra&ccedil;&atilde;o</td><td>Kubernetes (kind) + NodePort + HPA</td><td>Deploy, exposi&ccedil;&atilde;o (:30080) e escala 1-5 r&eacute;plicas</td></tr>
+      <tr><td>Infraestrutura</td><td>Terraform + metrics-server (Helm)</td><td>Provisiona cluster, namespace, banco e m&eacute;tricas</td></tr>
+      <tr><td>CI/CD</td><td>GitHub Actions</td><td>Build, testes (JUnit/Testcontainers/JaCoCo) e deploy</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="section">4. Escalabilidade autom&aacute;tica (aumento de carga / m&uacute;ltiplas ordens de servi&ccedil;o)</h3>
+  <p>A aplica&ccedil;&atilde;o escala <strong>horizontalmente e de forma autom&aacute;tica</strong> por meio de um
+  <em>HorizontalPodAutoscaler (HPA)</em> do Kubernetes. Quando cresce o volume de requisi&ccedil;&otilde;es &mdash; por exemplo,
+  <strong>abertura simult&acirc;nea de m&uacute;ltiplas ordens de servi&ccedil;o</strong> ou picos de consulta/atualiza&ccedil;&atilde;o de status &mdash;
+  o consumo de CPU e mem&oacute;ria dos pods aumenta. O <em>metrics-server</em> (provisionado via Terraform) coleta essas
+  m&eacute;tricas e o HPA cria novas r&eacute;plicas do pod <code>oficina-api</code>; o <em>Service NodePort</em> distribui
+  a carga entre as r&eacute;plicas dispon&iacute;veis. Quando a carga diminui, o HPA reduz as r&eacute;plicas de volta ao m&iacute;nimo.</p>
+
+  <table>
+    <thead>
+      <tr><th>Par&acirc;metro do HPA</th><th>Valor</th><th>Efeito</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>minReplicas</td><td>1</td><td>Estado base em carga normal</td></tr>
+      <tr><td>maxReplicas</td><td>5</td><td>Teto de r&eacute;plicas sob alta carga</td></tr>
+      <tr><td>CPU target</td><td>70% (Utilization)</td><td>Gatilho de escala por uso de CPU</td></tr>
+      <tr><td>Mem&oacute;ria target</td><td>80% (Utilization)</td><td>Gatilho de escala por uso de mem&oacute;ria</td></tr>
+      <tr><td>scaleUp</td><td>+2 pods / 30s (janela 30s)</td><td>Sobe r&aacute;pido diante de picos de carga</td></tr>
+      <tr><td>scaleDown</td><td>-1 pod / 60s (janela 120s)</td><td>Desce de forma conservadora, evitando oscila&ccedil;&atilde;o</td></tr>
+      <tr><td>resources (por pod)</td><td>requests 250m CPU / 512Mi &mdash; limits 750m CPU / 768Mi</td><td>Base de c&aacute;lculo do percentual de utiliza&ccedil;&atilde;o</td></tr>
+    </tbody>
+  </table>
+
+  <p style="font-size:10.5pt; color:#4a5568;"><strong>Valida&ccedil;&atilde;o:</strong> &eacute; poss&iacute;vel gerar carga com m&uacute;ltiplas
+  requisi&ccedil;&otilde;es de abertura/consulta de OS e acompanhar o escalonamento com
+  <code>kubectl -n oficina get hpa -w</code> e <code>kubectl -n oficina get pods -w</code>,
+  observando o n&uacute;mero de r&eacute;plicas variar entre 1 e 5 conforme a demanda.</p>
+
+  <div class="diagram-page">
+    <h3>5. Desenho da Arquitetura</h3>
+    <img src="arquitetura.svg" alt="Diagrama de arquitetura da solucao" />
+    <div class="caption">Arquitetura da solu&ccedil;&atilde;o com os recursos escolhidos: usu&aacute;rios, cluster Kubernetes (kind) com API Spring Boot, PostgreSQL, MailHog, HPA e metrics-server, provisionamento via Terraform e pipeline CI/CD no GitHub Actions.</div>
+  </div>
+
+</body>
+</html>

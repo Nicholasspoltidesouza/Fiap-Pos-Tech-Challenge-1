@@ -35,8 +35,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String tokenType = jwtTokenProvider.extractTokenType(token);
 
             if ("ACCESS".equals(tokenType)) {
-                String email = jwtTokenProvider.extractEmail(token);
-                UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+                UserDetails userDetails;
+                if (jwtTokenProvider.isClientAccessToken(token)) {
+                    userDetails = CustomUserDetails.fromClienteToken(
+                            jwtTokenProvider.extractUserId(token),
+                            jwtTokenProvider.extractCpf(token),
+                            jwtTokenProvider.extractCpf(token));
+                } else {
+                    String email = jwtTokenProvider.extractEmail(token);
+                    userDetails = userDetailsService.loadUserByUsername(email);
+                }
 
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());

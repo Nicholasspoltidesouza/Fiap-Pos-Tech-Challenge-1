@@ -1,6 +1,8 @@
-# Diagrama de Arquitetura — Tech Challenge Fase 2
+# Diagrama de Arquitetura — Tech Challenge Fase 2 e Fase 3
 
-Documento visual da arquitetura da solução de gestão de oficina mecânica, contemplando **componentes da aplicação**, **infraestrutura provisionada** e **fluxo de deploy**, conforme exigido na entrega da Fase 2.
+Documento visual da arquitetura da solução de gestão de oficina mecânica, contemplando **componentes da aplicação**, **infraestrutura provisionada** e **fluxo de deploy**.
+
+A **Fase 3** adiciona simulação local de nuvem: Kong como API Gateway, functions Python (contrato Lambda) para CPF/JWT e notificação, PostgreSQL gerenciado em namespace isolado, HPA, logs JSON, métricas Prometheus e traces Jaeger. Ver `docs/DIAGRAMA_SEQUENCIA.md` e `docs/DIAGRAMA_ER.md`.
 
 Documentos complementares:
 

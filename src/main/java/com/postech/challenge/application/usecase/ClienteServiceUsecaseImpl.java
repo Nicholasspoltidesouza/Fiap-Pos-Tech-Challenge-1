@@ -85,6 +85,7 @@ public class ClienteServiceUsecaseImpl extends ClienteServiceUsecase {
     private ClienteRequestDTO withNormalizedCpfCnpj(ClienteRequestDTO request, String normalizedCpfCnpj) {
         return new ClienteRequestDTO(
                 request.nome(),
-                normalizedCpfCnpj);
+                normalizedCpfCnpj,
+                request.status());
     }
 }

@@ -1,29 +1,70 @@
-# FIAP Pos Tech - Tech Challenge (Fase 2)
+# FIAP Pos Tech - Tech Challenge — oficina-api
 
-API backend para gerenciamento de oficina mecânica, evoluída na Fase 2 com **Clean Architecture +
-domínio rico (DDD)**, validação de entrada, notificação por e-mail e infraestrutura local
-(Kubernetes via kind, Terraform e CI/CD).
+API principal da oficina mecânica. Este repositório é o **4º** da fase (aplicação no Kubernetes).
+Os outros três são independentes:
+
+| Repositório | Papel |
+|---|---|
+| [Fiap-Pos-Tech-Challenge-auth-lambda](https://github.com/Nicholasspoltidesouza/Fiap-Pos-Tech-Challenge-auth-lambda) | Function serverless (auth CPF + notificação) |
+| [Fiap-Pos-Tech-Challenge-infra-k8s](https://github.com/Nicholasspoltidesouza/Fiap-Pos-Tech-Challenge-infra-k8s) | Terraform: kind, Kong, HPA, Jaeger |
+| [Fiap-Pos-Tech-Challenge-infra-db](https://github.com/Nicholasspoltidesouza/Fiap-Pos-Tech-Challenge-infra-db) | Terraform: PostgreSQL gerenciado (simulação RDS) |
+
+Stack local: **Kong** (API Gateway) + functions Python com contrato Lambda + PostgreSQL + kind.
 
 Este projeto contempla:
-- Domínio rico: agregado `OrdemServico` com máquina de estados (a regra de transição mora no agregado)
-- Ciclo de vida e acompanhamento de ordens de serviço
-- Listagem de OS ativas ordenada por status (com exclusão lógica de finalizadas/entregues)
-- Gestão de clientes, veículos, serviços, peças e insumos
-- Autenticação JWT com autorização por perfil (segredo externalizado por variável de ambiente)
-- Validação de DTOs com Hibernate Validator (Jakarta Bean Validation)
-- Notificação de mudança de status por e-mail (MailHog no ambiente local)
-- Monitoramento de tempo médio de execução de serviços
-- Documentação OpenAPI/Swagger
-- Testes automatizados (unitários + integração com Testcontainers) e cobertura via JaCoCo
-- Manifestos Kubernetes (`/k8s`), IaC com Terraform (`/infra`) e pipeline CI/CD (`.github/workflows`)
+- Domínio rico: agregado `OrdemServico` com máquina de estados
+- Autenticação JWT de **staff** (e-mail/senha) e de **cliente** (CPF via function)
+- Rotas de abertura/acompanhamento de OS protegidas para `ROLE_CLIENTE`
+- Status cadastral do cliente (`ATIVO` / `INATIVO`)
+- Notificação serverless (HTTP para notify-lambda, fallback e-mail/MailHog)
+- Logs JSON, correlation id, métricas Micrometer/Prometheus, traces Zipkin/Jaeger
+- HPA no Deployment `oficina-api`
+- OpenAPI/Swagger, Testcontainers, JaCoCo, GitHub Actions (`homolog` e `main`)
+
+## Arquitetura deste repositório
+
+```mermaid
+flowchart LR
+  Client --> Kong[Kong :8000]
+  Kong -->|POST /auth/cpf| Auth[auth-lambda]
+  Kong -->|JWT /api/*| API[oficina-api]
+  API --> DB[(PostgreSQL managed)]
+  API -->|HTTP notify| Notify[notify-lambda]
+  API --> Jaeger
+```
 
 ## Documentação de Arquitetura e Modelagem
 
 - `docs/DIAGRAMA_ARQUITETURA.md`: **diagramas visuais** da solução (componentes, infraestrutura provisionada e fluxo de deploy).
+- `docs/DIAGRAMA_SEQUENCIA.md`: autenticação CPF, login staff e notificação.
+- `docs/DIAGRAMA_ER.md`: modelo lógico e justificativa do PostgreSQL.
 - `DOCUMENTACAO_ARQUITETURA.md`: diagrama em camadas, responsabilidades e fluxo de dependências.
+- `docs/rfc/`: RFCs (nuvem local, PostgreSQL gerenciado, autenticação por CPF).
+- `docs/adr/`: ADRs (REST via Gateway, HPA, observabilidade).
 - `docs/DOMAIN_STORYTELLING.md`: Domain Storytelling (atores, narrativa e diagrama).
 - `docs/EVENT_STORMING.md`: Event Storming evoluído (brainstorm, linha do tempo, eventos pivotais,
   comandos, políticas, agregados e contextos delimitados).
+
+## Vídeo Demonstrativo
+
+Demonstração da solução (deploy, CI/CD, APIs e escalabilidade):
+
+**https://youtu.be/bpC1dvo5epg**
+
+Roteiro utilizado na gravação: `docs/ROTEIRO_VIDEO.md`
+
+## Collection de APIs (Swagger)
+
+- Swagger UI (local): http://localhost:8080/swagger-ui.html
+- OpenAPI JSON: http://localhost:8080/v3/api-docs
+- Via Kong (stack completa): http://localhost:8000/swagger-ui.html
+- Swagger UI (Kubernetes direto): http://localhost:30080/swagger-ui.html
+
+Auth do cliente (function):
+
+```bash
+curl -X POST http://localhost:8000/auth/cpf -H "Content-Type: application/json" -d "{\"cpf\":\"52998224725\"}"
+```
 
 ## 1) Stack Tecnológica
 
@@ -58,9 +99,15 @@ cp .env.example .env
 docker-compose up --build
 ```
 
+A stack sobe com **Kong**, **auth-lambda**, **notify-lambda**, **Jaeger**, **MailHog**, **PostgreSQL** e **oficina-api**.
+
 3. Acesse:
-- Swagger UI: `http://localhost:8080/swagger-ui.html`
-- OpenAPI JSON: `http://localhost:8080/v3/api-docs`
+- Kong proxy: `http://localhost:8000`
+- Swagger via Kong: `http://localhost:8000/swagger-ui.html`
+- Auth CPF: `POST http://localhost:8000/auth/cpf` body `{"cpf":"52998224725"}`
+- Jaeger: `http://localhost:16686`
+- MailHog: `http://localhost:8025`
+- API direta (debug): `http://localhost:8080/swagger-ui.html`
 
 4. Faça login com usuário admin bootstrap:
 - Email: `admin@oficina.com`

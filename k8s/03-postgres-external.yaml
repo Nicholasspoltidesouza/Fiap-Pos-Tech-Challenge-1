@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: oficina
+  labels:
+    app: postgres
+    app.kubernetes.io/component: database-alias
+spec:
+  type: ExternalName
+  externalName: postgres.oficina-db.svc.cluster.local
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: 5432

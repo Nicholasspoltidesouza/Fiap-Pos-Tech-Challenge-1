@@ -22,6 +22,7 @@ class ClienteDataMapperTest {
 
         assertEquals("Joao Silva", entity.getNome());
         assertEquals("123.456.789-00", entity.getCpfCnpj());
+        assertEquals(com.postech.challenge.domain.model.StatusCliente.ATIVO, entity.getStatus());
     }
 
     @Test
@@ -31,6 +32,7 @@ class ClienteDataMapperTest {
         entity.setId(id);
         entity.setNome("Maria Oliveira");
         entity.setCpfCnpj("234.567.890-11");
+        entity.setStatus(com.postech.challenge.domain.model.StatusCliente.ATIVO);
 
         ClienteResponseDTO response = clienteDataMapper.toResponse(entity);
 

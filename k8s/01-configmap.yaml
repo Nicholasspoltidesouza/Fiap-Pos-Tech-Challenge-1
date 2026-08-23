@@ -17,5 +17,8 @@ data:
   MAIL_SMTP_STARTTLS: "false"
   NOTIFICACAO_EMAIL_REMETENTE: "oficina@oficina.com"
   NOTIFICACAO_EMAIL_DESTINATARIO: "notificacoes@oficina.com"
+  NOTIFICACAO_HTTP_URL: "http://notify-lambda.oficina.svc.cluster.local:8080/notify"
   JWT_ACCESS_EXPIRATION_MS: "3600000"
   JWT_REFRESH_EXPIRATION_MS: "604800000"
+  JWT_ISSUER: "oficina-auth"
+  ZIPKIN_ENDPOINT: "http://jaeger.observability.svc.cluster.local:9411/api/v2/spans"
