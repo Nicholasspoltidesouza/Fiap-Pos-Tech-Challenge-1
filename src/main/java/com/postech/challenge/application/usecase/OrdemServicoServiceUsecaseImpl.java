@@ -14,19 +14,24 @@ import com.postech.challenge.application.dto.OrdemServicoRequestDTO;
 import com.postech.challenge.application.dto.OrdemServicoResponseDTO;
 import com.postech.challenge.application.gateway.NotificacaoOrdemServicoGateway;
 import com.postech.challenge.application.mapper.OrdemServicoDataMapper;
+import com.postech.challenge.application.observability.ObservabilidadeServico;
+import com.postech.challenge.domain.exception.TransicaoStatusInvalidaException;
 import com.postech.challenge.domain.model.OrdemServico;
+import com.postech.challenge.domain.model.StatusCliente;
 import com.postech.challenge.domain.model.StatusOrdemServico;
 import com.postech.challenge.domain.model.vo.CpfCnpj;
 import com.postech.challenge.domain.model.vo.Placa;
 import com.postech.challenge.infrastructure.persistence.entity.ClienteEntity;
 import com.postech.challenge.infrastructure.persistence.entity.InsumoEntity;
 import com.postech.challenge.infrastructure.persistence.entity.OrdemServicoEntity;
+import com.postech.challenge.infrastructure.persistence.entity.OrdemServicoStatusHistoricoEntity;
 import com.postech.challenge.infrastructure.persistence.entity.PecaEntity;
 import com.postech.challenge.infrastructure.persistence.entity.ServicoEntity;
 import com.postech.challenge.infrastructure.persistence.entity.VeiculoEntity;
 import com.postech.challenge.infrastructure.persistence.repository.ClienteRepository;
 import com.postech.challenge.infrastructure.persistence.repository.InsumoRepository;
 import com.postech.challenge.infrastructure.persistence.repository.OrdemServicoRepository;
+import com.postech.challenge.infrastructure.persistence.repository.OrdemServicoStatusHistoricoJpaRepository;
 import com.postech.challenge.infrastructure.persistence.repository.PecaRepository;
 import com.postech.challenge.infrastructure.persistence.repository.ServicoRepository;
 import com.postech.challenge.infrastructure.persistence.repository.VeiculoRepository;
@@ -44,6 +49,8 @@ public class OrdemServicoServiceUsecaseImpl extends OrdemServicoServiceUsecase {
     private final PecaRepository pecaRepository;
     private final OrdemServicoDataMapper ordemServicoDataMapper;
     private final NotificacaoOrdemServicoGateway notificacaoGateway;
+    private final OrdemServicoStatusHistoricoJpaRepository statusHistoricoRepository;
+    private final ObservabilidadeServico observabilidadeServico;
 
     public OrdemServicoServiceUsecaseImpl(
             OrdemServicoRepository ordemServicoRepository,
@@ -53,7 +60,9 @@ public class OrdemServicoServiceUsecaseImpl extends OrdemServicoServiceUsecase {
             InsumoRepository insumoRepository,
             PecaRepository pecaRepository,
             OrdemServicoDataMapper ordemServicoDataMapper,
-            NotificacaoOrdemServicoGateway notificacaoGateway) {
+            NotificacaoOrdemServicoGateway notificacaoGateway,
+            OrdemServicoStatusHistoricoJpaRepository statusHistoricoRepository,
+            ObservabilidadeServico observabilidadeServico) {
         this.ordemServicoRepository = ordemServicoRepository;
         this.clienteRepository = clienteRepository;
         this.veiculoRepository = veiculoRepository;
@@ -62,6 +71,8 @@ public class OrdemServicoServiceUsecaseImpl extends OrdemServicoServiceUsecase {
         this.pecaRepository = pecaRepository;
         this.ordemServicoDataMapper = ordemServicoDataMapper;
         this.notificacaoGateway = notificacaoGateway;
+        this.statusHistoricoRepository = statusHistoricoRepository;
+        this.observabilidadeServico = observabilidadeServico;
     }
 
     @Override
@@ -90,6 +101,7 @@ public class OrdemServicoServiceUsecaseImpl extends OrdemServicoServiceUsecase {
     @Override
     public OrdemServicoResponseDTO create(OrdemServicoRequestDTO request) {
         ClienteEntity cliente = findClienteById(request.clienteId());
+        garantirClienteAtivo(cliente);
         VeiculoEntity veiculo = findVeiculoById(request.veiculoId());
         StatusOrdemServico status = parseStatusOrDefault(request.status(), StatusOrdemServico.RECEBIDA);
         List<ServicoEntity> servicos = findServicosByIds(request.servicosSolicitadosIds());
@@ -112,7 +124,7 @@ public class OrdemServicoServiceUsecaseImpl extends OrdemServicoServiceUsecase {
                 pecas
         );
 
-        return ordemServicoDataMapper.toResponse(ordemServicoRepository.save(ordemServico));
+        return persistNewOrder(ordemServico);
     }
 
     @Override
@@ -120,6 +132,7 @@ public class OrdemServicoServiceUsecaseImpl extends OrdemServicoServiceUsecase {
         String normalizedCpfCnpj = CpfCnpj.of(request.clienteCpfCnpj()).value();
         ClienteEntity cliente = clienteRepository.findByCpfCnpj(normalizedCpfCnpj)
                 .orElseThrow(() -> new EntityNotFoundException("Cliente not found by CPF/CNPJ: " + normalizedCpfCnpj));
+        garantirClienteAtivo(cliente);
         VeiculoEntity veiculo = resolveVeiculo(cliente, request);
         List<ServicoEntity> servicos = findServicosByIds(request.servicosSolicitadosIds());
         List<InsumoEntity> insumos = findInsumosByIds(request.insumosSolicitadosIds());
@@ -139,7 +152,7 @@ public class OrdemServicoServiceUsecaseImpl extends OrdemServicoServiceUsecase {
                 pecas
         );
 
-        return ordemServicoDataMapper.toResponse(ordemServicoRepository.save(ordemServico));
+        return persistNewOrder(ordemServico);
     }
 
     @Override
@@ -209,6 +222,7 @@ public class OrdemServicoServiceUsecaseImpl extends OrdemServicoServiceUsecase {
 
         applyDomain(ordemServico, ordem);
         OrdemServicoEntity atualizada = ordemServicoRepository.save(ordemServico);
+        registrarHistorico(atualizada);
         notificacaoGateway.notificarAtualizacaoStatus(atualizada);
         return ordemServicoDataMapper.toResponse(atualizada);
     }
@@ -254,13 +268,40 @@ public class OrdemServicoServiceUsecaseImpl extends OrdemServicoServiceUsecase {
     }
 
     private OrdemServicoResponseDTO aplicarTransicao(UUID id, java.util.function.Consumer<OrdemServico> transicao) {
-        OrdemServicoEntity ordemServico = getOrdemServicoById(id);
-        OrdemServico ordem = toDomain(ordemServico);
-        transicao.accept(ordem);
-        applyDomain(ordemServico, ordem);
-        OrdemServicoEntity atualizada = ordemServicoRepository.save(ordemServico);
-        notificacaoGateway.notificarAtualizacaoStatus(atualizada);
-        return ordemServicoDataMapper.toResponse(atualizada);
+        try {
+            OrdemServicoEntity ordemServico = getOrdemServicoById(id);
+            OrdemServico ordem = toDomain(ordemServico);
+            transicao.accept(ordem);
+            applyDomain(ordemServico, ordem);
+            OrdemServicoEntity atualizada = ordemServicoRepository.save(ordemServico);
+            registrarHistorico(atualizada);
+            notificacaoGateway.notificarAtualizacaoStatus(atualizada);
+            return ordemServicoDataMapper.toResponse(atualizada);
+        } catch (TransicaoStatusInvalidaException ex) {
+            observabilidadeServico.registrarFalhaProcessamento();
+            throw ex;
+        }
+    }
+
+    private OrdemServicoResponseDTO persistNewOrder(OrdemServicoEntity ordemServico) {
+        OrdemServicoEntity saved = ordemServicoRepository.save(ordemServico);
+        registrarHistorico(saved);
+        observabilidadeServico.registrarCriacao();
+        return ordemServicoDataMapper.toResponse(saved);
+    }
+
+    private void registrarHistorico(OrdemServicoEntity ordemServico) {
+        OrdemServicoStatusHistoricoEntity historico = new OrdemServicoStatusHistoricoEntity();
+        historico.setOrdemServico(ordemServico);
+        historico.setStatus(ordemServico.getStatus());
+        historico.setAlteradoEm(LocalDateTime.now());
+        statusHistoricoRepository.save(historico);
+    }
+
+    private void garantirClienteAtivo(ClienteEntity cliente) {
+        if (cliente.getStatus() == StatusCliente.INATIVO) {
+            throw new IllegalStateException("Cliente is inactive and cannot open work orders");
+        }
     }
 
     private OrdemServico toDomain(OrdemServicoEntity entity) {

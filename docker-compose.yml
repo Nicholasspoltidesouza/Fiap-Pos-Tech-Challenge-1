@@ -41,6 +41,67 @@ services:
       timeout: 5s
       retries: 5
       start_period: 40s
+    environment:
+      NOTIFICACAO_HTTP_URL: http://notify-lambda:8080/notify
+      JWT_ISSUER: oficina-auth
+      ZIPKIN_ENDPOINT: http://jaeger:9411/api/v2/spans
+
+  auth-lambda:
+    build:
+      context: ../Fiap-Pos-Tech-Challenge-auth-lambda
+      dockerfile: Dockerfile.auth
+    container_name: oficina-auth-lambda
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: ${POSTGRES_DB:-oficina_mec_db}
+      POSTGRES_USER: ${POSTGRES_USER:-admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-admin}
+      JWT_SECRET: ${JWT_SECRET:-oficina-local-hs512-secret-not-for-production-000000000000000001}
+      JWT_ISSUER: oficina-auth
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8090:8080"
+
+  notify-lambda:
+    build:
+      context: ../Fiap-Pos-Tech-Challenge-auth-lambda
+      dockerfile: Dockerfile.notify
+    container_name: oficina-notify-lambda
+    environment:
+      MAIL_HOST: mailhog
+      MAIL_PORT: "1025"
+    ports:
+      - "8091:8080"
+
+  kong:
+    image: kong:3.8
+    container_name: oficina-kong
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /kong/declarative/kong.yml
+      KONG_PROXY_LISTEN: 0.0.0.0:8000
+      KONG_ADMIN_LISTEN: 0.0.0.0:8001
+    volumes:
+      - ./kong/kong.yml:/kong/declarative/kong.yml:ro
+    ports:
+      - "8000:8000"
+      - "8001:8001"
+    depends_on:
+      - app
+      - auth-lambda
+      - notify-lambda
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.62
+    container_name: oficina-jaeger
+    environment:
+      COLLECTOR_ZIPKIN_HOST_PORT: ":9411"
+    ports:
+      - "16686:16686"
+      - "9411:9411"
 
 volumes:
   postgres_data:

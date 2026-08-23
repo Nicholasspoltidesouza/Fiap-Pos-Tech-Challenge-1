@@ -13,7 +13,8 @@ public class ClienteDataMapper {
         return new ClienteResponseDTO(
                 cliente.getId(),
                 cliente.getNome(),
-                cliente.getCpfCnpj()
+                cliente.getCpfCnpj(),
+                cliente.getStatus()
         );
     }
 
@@ -21,11 +22,13 @@ public class ClienteDataMapper {
         ClienteEntity cliente = new ClienteEntity();
         cliente.setNome(request.nome());
         cliente.setCpfCnpj(request.cpfCnpj());
+        cliente.setStatus(request.status());
         return cliente;
     }
 
     public void updateEntity(ClienteEntity cliente, ClienteRequestDTO request) {
         cliente.setNome(request.nome());
         cliente.setCpfCnpj(request.cpfCnpj());
+        cliente.setStatus(request.status());
     }
 }

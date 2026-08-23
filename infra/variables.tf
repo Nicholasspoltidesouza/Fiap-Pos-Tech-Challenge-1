@@ -38,6 +38,6 @@ variable "postgres_password" {
 variable "jwt_secret" {
   description = "JWT signing secret consumed by the application"
   type        = string
-  default     = "localDevelopmentSecretChangeMeInProductionEnvironments123456"
+  default     = "oficina-local-hs512-secret-not-for-production-000000000000000001"
   sensitive   = true
 }

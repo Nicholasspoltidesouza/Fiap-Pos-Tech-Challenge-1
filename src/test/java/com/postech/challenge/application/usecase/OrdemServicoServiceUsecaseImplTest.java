@@ -27,17 +27,20 @@ import com.postech.challenge.application.dto.OrdemServicoRequestDTO;
 import com.postech.challenge.application.dto.OrdemServicoResponseDTO;
 import com.postech.challenge.application.gateway.NotificacaoOrdemServicoGateway;
 import com.postech.challenge.application.mapper.OrdemServicoDataMapper;
+import com.postech.challenge.application.observability.ObservabilidadeServico;
 import com.postech.challenge.domain.exception.DomainException;
 import com.postech.challenge.infrastructure.persistence.entity.ClienteEntity;
 import com.postech.challenge.infrastructure.persistence.entity.InsumoEntity;
 import com.postech.challenge.infrastructure.persistence.entity.OrdemServicoEntity;
 import com.postech.challenge.infrastructure.persistence.entity.PecaEntity;
 import com.postech.challenge.infrastructure.persistence.entity.ServicoEntity;
+import com.postech.challenge.domain.model.StatusCliente;
 import com.postech.challenge.domain.model.StatusOrdemServico;
 import com.postech.challenge.infrastructure.persistence.entity.VeiculoEntity;
 import com.postech.challenge.infrastructure.persistence.repository.ClienteRepository;
 import com.postech.challenge.infrastructure.persistence.repository.InsumoRepository;
 import com.postech.challenge.infrastructure.persistence.repository.OrdemServicoRepository;
+import com.postech.challenge.infrastructure.persistence.repository.OrdemServicoStatusHistoricoJpaRepository;
 import com.postech.challenge.infrastructure.persistence.repository.PecaRepository;
 import com.postech.challenge.infrastructure.persistence.repository.ServicoRepository;
 import com.postech.challenge.infrastructure.persistence.repository.VeiculoRepository;
@@ -63,6 +66,10 @@ class OrdemServicoServiceUsecaseImplTest {
     private OrdemServicoDataMapper ordemServicoDataMapper;
     @Mock
     private NotificacaoOrdemServicoGateway notificacaoGateway;
+    @Mock
+    private OrdemServicoStatusHistoricoJpaRepository statusHistoricoRepository;
+    @Mock
+    private ObservabilidadeServico observabilidadeServico;
 
     @InjectMocks
     private OrdemServicoServiceUsecaseImpl ordemServicoService;
@@ -161,6 +168,24 @@ class OrdemServicoServiceUsecaseImplTest {
         verify(insumoRepository).findById(insumoId);
         verify(pecaRepository).findById(pecaId);
         verify(ordemServicoRepository).save(entityToSave);
+    }
+
+    @Test
+    void shouldRejectCreateWhenClienteIsInativo() {
+        UUID clienteId = UUID.randomUUID();
+        OrdemServicoRequestDTO request = buildRequest(
+                clienteId, UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), "RECEBIDA");
+        ClienteEntity cliente = buildCliente(clienteId);
+        cliente.setStatus(StatusCliente.INATIVO);
+
+        when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(cliente));
+
+        IllegalStateException exception = assertThrows(
+                IllegalStateException.class,
+                () -> ordemServicoService.create(request));
+
+        assertTrue(exception.getMessage().contains("inactive"));
+        verify(ordemServicoRepository, never()).save(any());
     }
 
     @Test

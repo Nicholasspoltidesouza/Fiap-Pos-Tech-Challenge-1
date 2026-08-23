@@ -16,13 +16,23 @@ public class CustomUserDetails implements UserDetails {
     private final String email;
     private final String senha;
     private final PerfilUsuario perfil;
+    private final String cpfCnpj;
 
     public CustomUserDetails(UUID id, String nome, String email, String senha, PerfilUsuario perfil) {
+        this(id, nome, email, senha, perfil, null);
+    }
+
+    public CustomUserDetails(UUID id, String nome, String email, String senha, PerfilUsuario perfil, String cpfCnpj) {
         this.id = id;
         this.nome = nome;
         this.email = email;
         this.senha = senha;
         this.perfil = perfil;
+        this.cpfCnpj = cpfCnpj;
+    }
+
+    public static CustomUserDetails fromClienteToken(UUID clientId, String cpf, String name) {
+        return new CustomUserDetails(clientId, name, cpf, "N/A", PerfilUsuario.CLIENTE, cpf);
     }
 
     @Override
@@ -50,5 +60,9 @@ public class CustomUserDetails implements UserDetails {
 
     public PerfilUsuario getPerfil() {
         return perfil;
+    }
+
+    public String getCpfCnpj() {
+        return cpfCnpj;
     }
 }

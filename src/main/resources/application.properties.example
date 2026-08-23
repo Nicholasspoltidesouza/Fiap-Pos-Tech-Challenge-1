@@ -21,6 +21,7 @@ springdoc.swagger-ui.operationsSorter=alpha
 jwt.secret=${JWT_SECRET}
 jwt.access-expiration-ms=${JWT_ACCESS_EXPIRATION_MS:3600000}
 jwt.refresh-expiration-ms=${JWT_REFRESH_EXPIRATION_MS:604800000}
+jwt.issuer=${JWT_ISSUER:oficina-auth}
 
 # Email notification (MailHog/Mailpit for local development).
 spring.mail.host=${MAIL_HOST:localhost}
@@ -29,8 +30,11 @@ spring.mail.properties.mail.smtp.auth=${MAIL_SMTP_AUTH:false}
 spring.mail.properties.mail.smtp.starttls.enable=${MAIL_SMTP_STARTTLS:false}
 notificacao.email.remetente=${NOTIFICACAO_EMAIL_REMETENTE:oficina@oficina.com}
 notificacao.email.destinatario=${NOTIFICACAO_EMAIL_DESTINATARIO:notificacoes@oficina.com}
+notificacao.http.url=${NOTIFICACAO_HTTP_URL:http://localhost:8091/notify}
 
-# Actuator health endpoints (used by Kubernetes liveness/readiness probes).
-management.endpoints.web.exposure.include=health,info
+# Actuator, traces and metrics.
+management.endpoints.web.exposure.include=health,info,prometheus,metrics
 management.endpoint.health.probes.enabled=true
 management.endpoint.health.show-details=never
+management.tracing.sampling.probability=${TRACING_SAMPLING_PROBABILITY:1.0}
+management.zipkin.tracing.endpoint=${ZIPKIN_ENDPOINT:http://localhost:9411/api/v2/spans}

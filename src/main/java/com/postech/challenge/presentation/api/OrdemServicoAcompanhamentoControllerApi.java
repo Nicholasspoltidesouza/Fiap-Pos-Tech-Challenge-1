@@ -15,8 +15,8 @@ import com.postech.challenge.application.usecase.OrdemServicoServiceUsecase;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
-@RequestMapping("/api/public/ordens-servico")
-@Tag(name = "Acompanhamento de Ordem de Servico", description = "Endpoints para acompanhamento de ordens pelo cliente")
+@RequestMapping("/api/ordens-servico")
+@Tag(name = "Acompanhamento de Ordem de Servico", description = "Consulta autenticada de acompanhamento da OS pelo cliente")
 public class OrdemServicoAcompanhamentoControllerApi {
 
     private final OrdemServicoServiceUsecase ordemServicoServiceUsecase;
