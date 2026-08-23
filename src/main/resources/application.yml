@@ -65,3 +65,10 @@ management:
   zipkin:
     tracing:
       endpoint: ${ZIPKIN_ENDPOINT:http://localhost:9411/api/v2/spans}
+  datadog:
+    metrics:
+      export:
+        enabled: ${DATADOG_METRICS_ENABLED:false}
+        api-key: ${DATADOG_API_KEY:}
+        application-key: ${DATADOG_APP_KEY:}
+        step: 30s

@@ -1,0 +1,21 @@
+groups:
+  - name: oficina-work-orders
+    rules:
+      - alert: WorkOrderProcessingFailure
+        expr: increase(oficina_os_processing_failures_total[5m]) > 0
+        for: 0m
+        labels:
+          severity: critical
+          service: oficina-api
+        annotations:
+          summary: Work-order processing failure detected
+          description: The API recorded a failure while processing a work order in the last 5 minutes.
+      - alert: WorkOrderIntegrationError
+        expr: increase(oficina_integration_errors_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: warning
+          service: oficina-api
+        annotations:
+          summary: Work-order integration error detected
+          description: Downstream notification integration failed in the last 5 minutes.

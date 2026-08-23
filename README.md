@@ -18,6 +18,8 @@ Este projeto contempla:
 - Status cadastral do cliente (`ATIVO` / `INATIVO`)
 - Notificação serverless (HTTP para notify-lambda, fallback e-mail/MailHog)
 - Logs JSON, correlation id, métricas Micrometer/Prometheus, traces Zipkin/Jaeger
+- Dashboard operacional: volume diário de OS, tempo médio em Diagnóstico/Execução/Finalização e alertas de falha
+- Grafana + Prometheus + Alertmanager (local) e Datadog opcional
 - HPA no Deployment `oficina-api`
 - OpenAPI/Swagger, Testcontainers, JaCoCo, GitHub Actions (`homolog` e `main`)
 
@@ -99,13 +101,16 @@ cp .env.example .env
 docker-compose up --build
 ```
 
-A stack sobe com **Kong**, **auth-lambda**, **notify-lambda**, **Jaeger**, **MailHog**, **PostgreSQL** e **oficina-api**.
+A stack sobe com **Kong**, **auth-lambda**, **notify-lambda**, **Jaeger**, **Prometheus**, **Grafana**, **Alertmanager**, **MailHog**, **PostgreSQL** e **oficina-api**.
 
 3. Acesse:
 - Kong proxy: `http://localhost:8000`
 - Swagger via Kong: `http://localhost:8000/swagger-ui.html`
 - Auth CPF: `POST http://localhost:8000/auth/cpf` body `{"cpf":"52998224725"}`
 - Jaeger: `http://localhost:16686`
+- Grafana (dashboard operacional): `http://localhost:3000` (admin/admin)
+- Prometheus / alertas de falha de OS: `http://localhost:9090/alerts`
+- Dashboard JSON (API): `GET http://localhost:8080/api/monitoramento/dashboard`
 - MailHog: `http://localhost:8025`
 - API direta (debug): `http://localhost:8080/swagger-ui.html`
 

@@ -1,0 +1,108 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "none" }, "overrides": [] },
+      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 0 },
+      "id": 1,
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [
+        {
+          "expr": "oficina_os_dashboard_volume_daily",
+          "legendFormat": "volume",
+          "refId": "A"
+        }
+      ],
+      "title": "Daily work-order volume",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "m" }, "overrides": [] },
+      "gridPos": { "h": 6, "w": 8, "x": 8, "y": 0 },
+      "id": 2,
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [
+        {
+          "expr": "oficina_os_dashboard_minutes{status=\"em_diagnostico\"}",
+          "legendFormat": "diagnosis",
+          "refId": "A"
+        }
+      ],
+      "title": "Average minutes in diagnosis",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "m" }, "overrides": [] },
+      "gridPos": { "h": 6, "w": 8, "x": 16, "y": 0 },
+      "id": 3,
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [
+        {
+          "expr": "oficina_os_dashboard_minutes{status=\"em_execucao\"}",
+          "legendFormat": "execution",
+          "refId": "A"
+        }
+      ],
+      "title": "Average minutes in execution",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "m" }, "overrides": [] },
+      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 6 },
+      "id": 4,
+      "targets": [
+        {
+          "expr": "oficina_os_dashboard_minutes{status=\"finalizada\"}",
+          "legendFormat": "finalization",
+          "refId": "A"
+        }
+      ],
+      "title": "Average minutes in finalization",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "gridPos": { "h": 8, "w": 16, "x": 8, "y": 6 },
+      "id": 5,
+      "targets": [
+        {
+          "expr": "increase(oficina_os_processing_failures_total[5m])",
+          "legendFormat": "processing failures",
+          "refId": "A"
+        },
+        {
+          "expr": "increase(oficina_integration_errors_total[5m])",
+          "legendFormat": "integration errors",
+          "refId": "B"
+        }
+      ],
+      "title": "Work-order failures and integration errors",
+      "type": "timeseries"
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["oficina", "fase-3"],
+  "templating": { "list": [] },
+  "time": { "from": "now-6h", "to": "now" },
+  "title": "Oficina operational dashboard",
+  "uid": "oficina-ops",
+  "version": 1
+}

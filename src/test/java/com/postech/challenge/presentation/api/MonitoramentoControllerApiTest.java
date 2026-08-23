@@ -3,6 +3,7 @@ package com.postech.challenge.presentation.api;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -13,6 +14,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import com.postech.challenge.application.dto.DashboardOperacionalResponseDTO;
 import com.postech.challenge.application.dto.TempoMedioServicoResponseDTO;
 import com.postech.challenge.application.usecase.MonitoramentoServiceUsecase;
 
@@ -33,5 +35,18 @@ class MonitoramentoControllerApiTest {
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(responseDTO, response.getBody());
+    }
+
+    @Test
+    void shouldReturnOperationalDashboard() {
+        MonitoramentoControllerApi controller = new MonitoramentoControllerApi(monitoramentoServiceUsecase);
+        DashboardOperacionalResponseDTO dashboard = new DashboardOperacionalResponseDTO(
+                LocalDate.now(), 7L, 40.0, 80.0, 25.0, 1.0, 3.0);
+        when(monitoramentoServiceUsecase.getDashboardOperacional()).thenReturn(dashboard);
+
+        ResponseEntity<DashboardOperacionalResponseDTO> response = controller.getDashboardOperacional();
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(dashboard, response.getBody());
     }
 }
