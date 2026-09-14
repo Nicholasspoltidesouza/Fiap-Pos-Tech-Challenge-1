@@ -28,6 +28,9 @@ spring:
           starttls:
             enable: ${MAIL_SMTP_STARTTLS:false}
 
+server:
+  forward-headers-strategy: framework
+
 springdoc:
   api-docs:
     path: /v3/api-docs
@@ -35,6 +38,8 @@ springdoc:
     path: /swagger-ui.html
     tags-sorter: alpha
     operations-sorter: alpha
+    try-it-out-enabled: true
+    use-root-path: false
 
 jwt:
   secret: ${JWT_SECRET:oficina-local-hs512-secret-not-for-production-000000000000000001}

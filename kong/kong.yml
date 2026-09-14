@@ -34,6 +34,32 @@ services:
       - name: actuator
         paths: ["/actuator/health", "/actuator/prometheus"]
         strip_path: false
+    plugins:
+      - name: cors
+        config:
+          origins:
+            - "http://localhost:8000"
+            - "http://localhost:8080"
+            - "http://127.0.0.1:8000"
+            - "http://127.0.0.1:8080"
+          methods:
+            - GET
+            - POST
+            - PUT
+            - PATCH
+            - DELETE
+            - OPTIONS
+            - HEAD
+          headers:
+            - Accept
+            - Authorization
+            - Content-Type
+            - X-Correlation-Id
+          exposed_headers:
+            - Authorization
+            - X-Correlation-Id
+          credentials: true
+          max_age: 3600
   - name: oficina-api-protected
     url: http://app:8080
     routes:
@@ -41,6 +67,31 @@ services:
         paths: ["/api"]
         strip_path: false
     plugins:
+      - name: cors
+        config:
+          origins:
+            - "http://localhost:8000"
+            - "http://localhost:8080"
+            - "http://127.0.0.1:8000"
+            - "http://127.0.0.1:8080"
+          methods:
+            - GET
+            - POST
+            - PUT
+            - PATCH
+            - DELETE
+            - OPTIONS
+            - HEAD
+          headers:
+            - Accept
+            - Authorization
+            - Content-Type
+            - X-Correlation-Id
+          exposed_headers:
+            - Authorization
+            - X-Correlation-Id
+          credentials: true
+          max_age: 3600
       - name: jwt
         config:
           key_claim_name: iss
